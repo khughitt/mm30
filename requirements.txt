@@ -11,4 +11,5 @@ r-viridis
 pyarrow
 numpy
 pandas
+scikit-learn
 snakemake-minimal

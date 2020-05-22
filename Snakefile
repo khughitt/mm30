@@ -33,7 +33,9 @@ rule all:
                feat_level=["gene", "pathway"]),
         expand(os.path.join(out_dir, "targeted", "mm25_{feat_level}_{category}_scores.feather"), 
                feat_level=["gene", "pathway"], category=categories),
-        custom_gmt
+        custom_gmt,
+        expand(os.path.join(out_dir, "clusters", "mm25_{feat_level}_covariate_clusters.feather"),
+               feat_level=["gene", "pathway"])
 
 rule create_custom_gene_sets:
     input:
@@ -62,3 +64,12 @@ rule mm25_all:
         os.path.join(out_dir, "all", "mm25_{feat_level}_scores.feather")
     script:
         "src/build_scores.R"
+
+rule cluster_covariates:
+    input: 
+        os.path.join(input_dir, "merged", "mm25_{feat_level}_association_pvals.feather")
+    output:
+        os.path.join(out_dir, "clusters", "mm25_{feat_level}_covariate_clusters.feather")
+    script:
+        "src/cluster_covariates.py"
+
