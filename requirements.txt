@@ -1,0 +1,14 @@
+conda-forge::python>=3.7
+conda-forge::r-base
+bioconductor-gseabase
+r-arrow
+r-heatmaply
+r-knitr
+r-metap
+r-nmf
+r-tidyverse
+r-viridis
+pyarrow
+numpy
+pandas
+snakemake-minimal
