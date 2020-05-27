@@ -20,12 +20,12 @@ gene_sets:
   sizes: [50, 100, 150, 200, 250, 500, 750, 1000]
 
 #
-# possible alt approaches:
-# 
-# - weight by # samples
-# - weight by type (rna-seq > microarray)
-#   - (or, use # genes, which would have a similar effect..)
+# clustering settings
 #
-# - also, for the general (all) version, could allow each dataset to contribute
-#   one value per category? (e.g. 1 surv pval, 1 stage pval, etc..)
-#
+
+# maximum number of missing values allowed for a gene to be used in clustering
+# covariates
+clustering:
+  num_clusters: 2
+  max_missing: 5
+

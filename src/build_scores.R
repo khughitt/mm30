@@ -15,36 +15,7 @@ suppressMessages(library(tidyverse))
 pvals <- read_feather(snakemake@input[['pvals']])
 stats <- read_feather(snakemake@input[['stats']])
 
-# load feature-phenotype association metadata
-input_dir <- file.path(snakemake@config$fassoc_dir, "mm25", snakemake@config["version"])
-
-infile <- file.path(input_dir, "metadata", "association_metadata.feather")
-associations <- read_feather(infile)
-
 id_field <- colnames(pvals)[1]
-
-# for constructing targeted feature scores, limit to p-values from a single category
-if ("category" %in% names(snakemake@params)) {
-  # get a list of associations of the desired category
-  pheno_subset <- associations %>%
-    filter(category == snakemake@params$category)
-
-  # remove associations that are not in the specified category
-  cols_to_keep <- sprintf("%s_%s", pheno_subset$dataset, pheno_subset$phenotype)
-  cols_to_keep <- c(id_field, cols_to_keep)
-
-  mask <- colnames(pvals) %in% cols_to_keep
-  pvals <- pvals[, mask]
-  stats <- stats[, mask]
-
-  # drop any features that no longer have any non-missing values after filtering
-  num_non_na <- apply(pvals, 1, function(x) {
-    sum(!is.na(x))
-  })
-
-  pvals <- pvals[num_non_na > 1, ]
-  stats <- stats[num_non_na > 1, ]
-}
 
 # normalize contributions from each dataset, if enabled;
 # note: for some metap methods, weights can also be specified for each p-value..
