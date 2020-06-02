@@ -1,0 +1,23 @@
+#
+# MM25 Configuration
+#
+out_dir: '/data/nih/mm25'
+version: '1.1'
+
+fassoc_dir: '/data/nih/fassoc'
+
+# If true, each dataset will contribute the same amount to the final combined
+# p-values / scores. In cases where multiple covariates are assessed for a dataset,
+# the "best" value (e.g. minimum p-value) will be used for each gene.
+normalize_dataset_contributions: true
+
+#
+# possible alt approaches:
+# 
+# - weight by # samples
+# - weight by type (rna-seq > microarray)
+#   - (or, use # genes, which would have a similar effect..)
+#
+# - also, for the general (all) version, could allow each dataset to contribute
+#   one value per category? (e.g. 1 surv pval, 1 stage pval, etc..)
+#

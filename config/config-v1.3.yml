@@ -2,9 +2,9 @@
 # MM25 Configuration
 #
 out_dir: '/data/nih/mm25'
-version: '2.0'
+version: '1.3'
 
-fassoc_dir: '/data/nih/fassoc/mm25/2.0'
+fassoc_dir: '/data/nih/fassoc'
 
 # If true, each dataset will contribute the same amount to the final combined
 # p-values / scores. In cases where multiple covariates are assessed for a dataset,
@@ -20,12 +20,12 @@ gene_sets:
   sizes: [50, 100, 150, 200, 250, 500, 750, 1000]
 
 #
-# clustering settings
+# possible alt approaches:
+# 
+# - weight by # samples
+# - weight by type (rna-seq > microarray)
+#   - (or, use # genes, which would have a similar effect..)
 #
-
-# maximum number of missing values allowed for a gene to be used in clustering
-# covariates
-clustering:
-  num_clusters: 2
-  max_missing: 5
-
+# - also, for the general (all) version, could allow each dataset to contribute
+#   one value per category? (e.g. 1 surv pval, 1 stage pval, etc..)
+#

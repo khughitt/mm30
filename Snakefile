@@ -11,11 +11,10 @@ import pandas as pd
 
 # base input and output data dirs;
 # output comes from the separate feature association ("fassoc") pipeline
-input_dir = join(config["fassoc_dir"], "mm25", config["version"])
 out_dir = join(config["out_dir"], config["version"])
 
 # load phenotype metadata
-phenotypes_infile = join(input_dir, "metadata", "association_metadata.feather")
+phenotypes_infile = join(config['fassoc_dir'], "metadata", "association_metadata.feather")
 phenotypes = pd.read_feather(phenotypes_infile)
 
 # phenotype categories
@@ -47,8 +46,8 @@ rule create_custom_gene_sets:
 
 rule mm25_all:
     input: 
-        pvals=join(input_dir, "merged", "mm25_{feat_level}_association_pvals.feather"),
-        stats=join(input_dir, "merged", "mm25_{feat_level}_association_stats.feather")
+        pvals=join(config['fassoc_dir'], "merged", "mm25_{feat_level}_association_pvals.feather"),
+        stats=join(config['fassoc_dir'], "merged", "mm25_{feat_level}_association_stats.feather")
     output:
         join(out_dir, "results", "all", "mm25_{feat_level}_scores.feather")
     script:
@@ -74,8 +73,8 @@ rule mm25_categories:
 
 rule create_mm25_cluster_subsets:
     input:
-        pvals=join(input_dir, "merged", "mm25_{feat_level}_association_pvals.feather"),
-        stats=join(input_dir, "merged", "mm25_{feat_level}_association_stats.feather"),
+        pvals=join(config['fassoc_dir'], "merged", "mm25_{feat_level}_association_pvals.feather"),
+        stats=join(config['fassoc_dir'], "merged", "mm25_{feat_level}_association_stats.feather"),
         clusters=join(out_dir, "clusters", "mm25_{feat_level}_covariate_clusters.feather")
     output:
         pvals=join(out_dir, "subsets", "clusters", "mm25_{feat_level}_{cluster_num}_pvals.feather"),
@@ -85,9 +84,9 @@ rule create_mm25_cluster_subsets:
 
 rule create_mm25_category_subsets:
     input:
-        pvals=join(input_dir, "merged", "mm25_{feat_level}_association_pvals.feather"),
-        stats=join(input_dir, "merged", "mm25_{feat_level}_association_stats.feather"),
-        mdata=join(input_dir, "metadata", "association_metadata.feather")
+        pvals=join(config['fassoc_dir'], "merged", "mm25_{feat_level}_association_pvals.feather"),
+        stats=join(config['fassoc_dir'], "merged", "mm25_{feat_level}_association_stats.feather"),
+        mdata=join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
         pvals=join(out_dir, "subsets", "categories", "mm25_{feat_level}_{category}_pvals.feather"),
         stats=join(out_dir, "subsets", "categories", "mm25_{feat_level}_{category}_stats.feather")
@@ -96,7 +95,7 @@ rule create_mm25_category_subsets:
 
 rule cluster_covariates:
     input: 
-        join(input_dir, "merged", "mm25_{feat_level}_association_pvals.feather")
+        join(config['fassoc_dir'], "merged", "mm25_{feat_level}_association_pvals.feather")
     output:
         join(out_dir, "clusters", "mm25_{feat_level}_covariate_clusters.feather")
     script:
