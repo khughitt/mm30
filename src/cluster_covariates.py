@@ -3,9 +3,9 @@
 # Clusters MM25 covariates
 # V. Keith Hughitt
 #
+import sys
 import numpy as np
 import pandas as pd
-from sklearn.mixture import GaussianMixture
 from sklearn.impute import KNNImputer
 
 np.random.seed(1)
@@ -31,14 +31,23 @@ if dat.isnull().sum().sum() > 0:
     imputer = KNNImputer(n_neighbors=4, weights="uniform")
     dat = imputer.fit_transform(dat)
 else:
-    # if not missing values are present, simply convert to an ndarray
+    # if no missing values are present, simply convert to an ndarray
     dat = dat.to_numpy()
 
 # fit gaussian mixture model and retrieve cluster assignments
-gmm = GaussianMixture(n_components = snakemake.config['clustering']['num_clusters'])
-gmm.fit(dat.T)
+if snakemake.config['clustering']['method'] == 'gaussian_mixture':
+    from sklearn.mixture import GaussianMixture
+    gmm = GaussianMixture(n_components = snakemake.config['clustering']['num_clusters'])
+    gmm.fit(dat.T)
 
-clusters = gmm.predict(dat.T)
+    clusters = gmm.predict(dat.T)
+elif snakemake.config['clustering']['method'] == 'kmeans':
+    from sklearn.cluster import KMeans
+    kmeans = KMeans(init='k-means++', n_clusters=snakemake.config['clustering']['num_clusters']).fit(dat.T)
+
+    clusters = kmeans.labels_
+else:
+    sys.exit("Invalid clustering method specified!")
 
 # store result
 res = pd.DataFrame({'covariate': cnames, 'cluster': clusters})

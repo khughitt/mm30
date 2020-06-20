@@ -68,7 +68,7 @@ num_missing <- apply(pval_mat, 1, function(x) {
 })
 num_present <- ncol(pval_mat) - num_missing
 
-save.image('~/tmp.rda')
+save.image(sprintf('~/tmp-%d.rda', sample(10000, 1)))
 
 # wrap sumz and sumlog functions to handle missing values and insufficient data cases
 sumlog_wrapper <- function(x) {

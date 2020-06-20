@@ -26,6 +26,7 @@ gene_sets:
 # maximum number of missing values allowed for a gene to be used in clustering
 # covariates
 clustering:
+  method: 'gaussian_mixture'
   num_clusters: 3
   max_missing: 5
 
