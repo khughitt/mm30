@@ -6,6 +6,8 @@ KH 2020.02.02
 Combines output from fassoc feature-phenotype association pipeline to generate final
 MM25 gene and pathway weights.
 """
+import glob
+import re
 from os.path import join
 import pandas as pd
 
@@ -34,6 +36,7 @@ rule all:
                feat_level=["gene", "pathway"], category=categories),
         expand(join(out_dir, "results", "clusters", "mm25_{feat_level}_{cluster_num}_scores.feather"),
                feat_level=["gene", "pathway"], cluster_num=range(config['clustering']['num_clusters'])),
+        create_combined_sample_metadata,
         custom_gmt
 
 rule create_custom_gene_sets:
@@ -100,4 +103,51 @@ rule cluster_covariates:
         join(out_dir, "clusters", "mm25_{feat_level}_covariate_clusters.feather")
     script:
         "src/cluster_covariates.py"
+
+rule create_combined_sample_metadata:
+    output: join(out_dir, "metadata.tsv")
+    run:
+        geo_mdata = glob.glob('/data/human/geo/%s/*/processed/*_sample_metadata.tsv' % (config["version"]))
+        mmrf_mdata = "/data/human/mmrf-commpass/IA14/clean/clinical_data_tables/MMRF_CoMMpass_IA14_combined_metadata.tsv"
+
+        outfile = "/data/nih/mm25/%s/metadata.tsv" % (config["version"])
+
+        # combine geo/mmrf metadata into a single dataframe with columns for sample id,
+        # experiment, platform, and platform_type
+        mdat = pd.read_csv(mmrf_mdata, sep='\t')[["public_id"]]
+        mdat.columns = ['sample_id']
+
+        # mmrf
+        mdat['experiment'] = ['MMRF'] * mdat.shape[0]
+        mdat['platform'] = ['GPL16791'] * mdat.shape[0] # HiSeq 2500
+        mdat['platform_type'] = ['RNA-Seq'] * mdat.shape[0]
+
+        # microarray platforms included in MM25 (v3.0)
+        mm25_microarray_platforms = ["GPL96", "GPL97", "GPL570", "GPL10558", "GPL5175", "GPL6244", "GPL25401", "GPL4819"]
+
+        # geo
+        for infile in geo_mdata:
+            # determine GEO identifier
+            geo_id = re.findall('GSE[0-9]+', infile)[0]
+
+            # load geo metadata
+            geo_mdat = pd.read_csv(infile, sep = '\t')[['geo_accession', 'platform_id']]
+            geo_mdat.columns = ['sample_id', 'platform']
+
+            geo_mdat['experiment'] = [geo_id] * geo_mdat.shape[0]
+
+            # determine platform type
+            if geo_mdat.platform.iloc[0] in mm25_microarray_platforms:
+                geo_mdat['platform_type'] = ['Microarray'] * geo_mdat.shape[0]
+            else:
+                geo_mdat['platform_type'] = ['RNA-Seq'] * geo_mdat.shape[0]
+
+            # reorder columns
+            geo_mdat = geo_mdat[['sample_id', 'experiment', 'platform', 'platform_type']]
+
+            # append to combined dataframe
+            mdat = pd.concat([mdat, geo_mdat])
+
+        # write combined metadata to disk
+        mdat.set_index('sample_id').to_csv(outfile, sep = '\t')
 

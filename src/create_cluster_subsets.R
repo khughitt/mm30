@@ -16,8 +16,6 @@ id_field <- colnames(pvals)[1]
 # load covariate clustering
 clusters <- read_feather(snakemake@input[['clusters']])
 
-save.image('~/tmp.rda')
-
 # get covariates in cluster
 covariates <- clusters %>%
   filter(cluster == snakemake@wildcards$cluster_num) %>%

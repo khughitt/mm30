@@ -92,7 +92,6 @@ sumz_wrapper <- function(x) {
     tryCatch({
       suppressWarnings(as.numeric(sumz(x)$p))
     }, error = function(e) {
-      message(i)
       NA
     })
   }
@@ -121,7 +120,6 @@ for (i in 1:nrow(pvals)) {
     sumz_pval <- tryCatch({
       as.numeric(sumz(row_pvals, weights = abs(row_stats))$p)
     }, error = function(e) {
-      message(i)
       NA
     })
 
