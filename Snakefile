@@ -107,19 +107,20 @@ rule cluster_covariates:
 rule create_combined_sample_metadata:
     output: join(out_dir, "metadata.tsv")
     run:
-        geo_mdata = glob.glob('/data/human/geo/%s/*/processed/*_sample_metadata.tsv' % (config["version"]))
-        mmrf_mdata = "/data/human/mmrf-commpass/IA14/clean/clinical_data_tables/MMRF_CoMMpass_IA14_combined_metadata.tsv"
+        geo_mdata = glob.glob('/data/human/geo/3.0/*/processed/*_sample_metadata.tsv')
+        mmrf_mdata = "/data/human/mmrf-commpass/IA15/clean/clinical_data_tables/MMRF_CoMMpass_IA15_combined_metadata.tsv"
 
         outfile = "/data/nih/mm25/%s/metadata.tsv" % (config["version"])
 
         # combine geo/mmrf metadata into a single dataframe with columns for sample id,
         # experiment, platform, and platform_type
-        mdat = pd.read_csv(mmrf_mdata, sep='\t')[["public_id"]]
-        mdat.columns = ['sample_id']
+        mdat = pd.read_csv(mmrf_mdata, sep='\t')[["public_id", "disease_stage", "cell_type"]]
+
+        mdat.rename(columns={'public_id': 'sample_id'}, inplace=True)
 
         # mmrf
         mdat['experiment'] = ['MMRF'] * mdat.shape[0]
-        mdat['platform'] = ['GPL16791'] * mdat.shape[0] # HiSeq 2500
+        mdat['platform_id'] = ['GPL16791'] * mdat.shape[0] # HiSeq 2500
         mdat['platform_type'] = ['RNA-Seq'] * mdat.shape[0]
 
         # microarray platforms included in MM25 (v3.0)
@@ -131,19 +132,22 @@ rule create_combined_sample_metadata:
             geo_id = re.findall('GSE[0-9]+', infile)[0]
 
             # load geo metadata
-            geo_mdat = pd.read_csv(infile, sep = '\t')[['geo_accession', 'platform_id']]
-            geo_mdat.columns = ['sample_id', 'platform']
+            geo_mdat = pd.read_csv(infile, sep = '\t')
 
+            # rename sample id column
+            geo_mdat.rename(columns={geo_mdat.columns[0]: 'sample_id'}, inplace=True)
+
+            # add experiment column
             geo_mdat['experiment'] = [geo_id] * geo_mdat.shape[0]
 
             # determine platform type
-            if geo_mdat.platform.iloc[0] in mm25_microarray_platforms:
+            if geo_mdat.platform_id.iloc[0] in mm25_microarray_platforms:
                 geo_mdat['platform_type'] = ['Microarray'] * geo_mdat.shape[0]
             else:
                 geo_mdat['platform_type'] = ['RNA-Seq'] * geo_mdat.shape[0]
 
-            # reorder columns
-            geo_mdat = geo_mdat[['sample_id', 'experiment', 'platform', 'platform_type']]
+            # match column order
+            geo_mdat = geo_mdat[mdat.columns]
 
             # append to combined dataframe
             mdat = pd.concat([mdat, geo_mdat])
