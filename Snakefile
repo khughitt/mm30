@@ -36,7 +36,7 @@ rule all:
                feat_level=["gene", "pathway"], category=categories),
         expand(join(out_dir, "results", "clusters", "mm25_{feat_level}_{cluster_num}_scores.feather"),
                feat_level=["gene", "pathway"], cluster_num=range(config['clustering']['num_clusters'])),
-        create_combined_sample_metadata,
+        join(out_dir, "metadata.tsv"),
         custom_gmt
 
 rule create_custom_gene_sets:
