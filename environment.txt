@@ -113,6 +113,7 @@ python-dateutil=2.8.1=py_0
 python_abi=3.8=1_cp38
 pytz=2020.1=pyh9f0ad1d_0
 pyyaml=5.3.1=py38h1e0a361_0
+r-annotables=0.1.90=r36_0
 r-arrow=1.0.1=r36he1b5a44_0
 r-askpass=1.1=r36hcdcec82_2
 r-assertthat=0.2.1=r36h6115d3f_2

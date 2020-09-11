@@ -1,6 +1,7 @@
 conda-forge::python>=3.8
 conda-forge::r-base
 bioconductor-gseabase
+r-annotables
 r-arrow
 r-heatmaply
 r-knitr
