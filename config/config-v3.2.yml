@@ -1,16 +1,16 @@
 #
 # MM25 Configuration
 #
-out_dir: '/data/nih/mm25'
+out_dir: '/data/proj/mm25'
 version: '3.2'
 
-fassoc_dir: '/data/nih/fassoc/mm25/3.2'
+fassoc_dir: '/data/fassoc/mm25/3.2'
 
 # location of processed gene expression data; used to construct a combined expr
 # data matrix for convenience
 expr_data:
-  geo: "/data/human/geo/3.1/*/processed/*_gene_expr_nr.feather"
-  mmrf: "/data/human/mmrf-commpass/IA15/clean/rnaseq/MMRF_CoMMpass_IA15a_E74GTF_HtSeq_Gene_Counts_1_BM_symbols_nr_CPM.feather"
+  geo: "/data/clean/geo/3.1/*/*_gene_expr_nr.feather"
+  mmrf: "/data/clean/mmrf/IA15/rnaseq/MMRF_CoMMpass_IA15a_E74GTF_HtSeq_Gene_Counts_1_BM_symbols_nr_CPM.feather"
 
 # If true, each dataset will contribute the same amount to the final combined
 # p-values / scores. In cases where multiple covariates are assessed for a dataset,
@@ -22,7 +22,7 @@ normalize_dataset_contributions: true
 # for each size, N, a gmt file will be constructed containing
 # only the top N MM25-ranked gene sets;
 gene_sets:
-  gmts: '/data/gmt/custom/msigdb/v7.0/*.gmt'
+  gmts: '/data/clean/msigdb/v7.0/*.gmt'
   sizes: [50, 100, 150, 200, 250, 500, 750, 1000]
 
 #

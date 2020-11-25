@@ -9,6 +9,7 @@ suppressMessages(library(tidyverse))
 # load dataset gene- or pathway-level p-values calculcated by fassoc
 pvals <- read_feather(snakemake@input[['pvals']])
 stats <- read_feather(snakemake@input[['stats']])
+coefs <- read_feather(snakemake@input[['coefs']])
 
 # "genes" or "gene sets"
 id_field <- colnames(pvals)[1]
@@ -25,6 +26,7 @@ mask <- colnames(pvals) %in% c(id_field, covariates)
 
 pvals <- pvals[, mask]
 stats <- stats[, mask]
+coefs <- coefs[, mask]
 
 # drop any features that no longer have any non-missing values after filtering
 num_non_na <- apply(pvals, 1, function(x) {
@@ -33,7 +35,9 @@ num_non_na <- apply(pvals, 1, function(x) {
 
 pvals <- pvals[num_non_na > 1, ]
 stats <- stats[num_non_na > 1, ]
+coefs <- coefs[num_non_na > 1, ]
 
 # store results
 write_feather(pvals, snakemake@output[['pvals']])
 write_feather(stats, snakemake@output[['stats']])
+write_feather(coefs, snakemake@output[['coefs']])
