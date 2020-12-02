@@ -14,7 +14,6 @@ suppressMessages(library(tidyverse))
 # load dataset gene- or pathway-level p-values calculcated by fassoc
 pvals <- read_feather(snakemake@input[['pvals']])
 stats <- read_feather(snakemake@input[['stats']])
-coefs <- read_feather(snakemake@input[['coefs']])
 
 id_field <- colnames(pvals)[1]
 
@@ -23,7 +22,6 @@ id_field <- colnames(pvals)[1]
 if (snakemake@config$normalize_dataset_contributions) {
   min_pval_list <- list(pull(pvals, id_field))
   max_stat_list <- list(pull(stats, id_field))
-  max_coef_list <- list(pull(coefs, id_field))
 
   dataset_ids <- unique(str_split(colnames(pvals)[-1], '_', simplify = TRUE)[, 1])
 
@@ -40,29 +38,25 @@ if (snakemake@config$normalize_dataset_contributions) {
 
     # get maximum statistics for each dataset
     max_stats <- suppressWarnings(apply(stats[, mask, drop = FALSE], 1, function (x) {
-      x[which.max(abs(x)], na.rm = TRUE)
+      x[which.max(abs(x))]
     }))
+
+    # convert nulls to na's so that they are preserved during call to "unlist" and
+    # flatten
+    is.na(max_stats) <- lapply(max_stats, length) == 0
+    max_stats <- unlist(max_stats)
+
     max_stats[is.infinite(max_stats)] <- NA
 
     max_stat_list <- c(max_stat_list, list(c(max_stats)))
-
-    # get maximum coeficients for each dataset
-    max_coefs <- suppressWarnings(apply(coefs[, mask, drop = FALSE], 1, function (x) {
-      x[which.max(abs(x)], na.rm = TRUE)
-    }))
-    max_coefs[is.infinite(max_coefs)] <- NA
-
-    max_coef_list <- c(max_coef_list, list(c(max_coefs)))
   } 
 
   # convert back to a tibble
   names(min_pval_list) <- c(id_field, dataset_ids)
   names(max_stat_list) <- c(id_field, dataset_ids)
-  names(max_coef_list) <- c(id_field, dataset_ids)
 
   pvals <- as_tibble(min_pval_list)
   stats <- as_tibble(max_stat_list)
-  coefs <- as_tibble(max_coef_list)
 }
 
 # create matrix versions of the p-values without the id column
@@ -74,17 +68,11 @@ stat_mat <- stats %>%
   select(-all_of(id_field)) %>%
   as.matrix()
 
-coef_mat <- coefs %>%
-  select(-all_of(id_field)) %>%
-  as.matrix()
-
 # count number of missing values for each gene or gene set
 num_missing <- apply(pval_mat, 1, function(x) {
   sum(is.na(x))
 })
 num_present <- ncol(pval_mat) - num_missing
-
-save.image(sprintf('~/tmp-%d.rda', sample(10000, 1)))
 
 # wrap sumz and sumlog functions to handle missing values and insufficient data cases
 sumlog_wrapper <- function(x) {
@@ -152,10 +140,6 @@ res <- data.frame(
   sumlog_pval  = suppressWarnings(apply(pval_mat, 1, sumlog_wrapper)),
   sumz_pval    = suppressWarnings(apply(pval_mat, 1, sumz_wrapper)),
   sumz_wt_pval = sumz_wt_pvals,
-  mean_stat    = apply(stat_mat, 1, mean, na.rm = TRUE),
-  median_stat    = apply(stat_mat, 1, median, na.rm = TRUE),
-  mean_coef    = apply(coef_mat, 1, mean, na.rm = TRUE),
-  median_coef    = apply(coef_mat, 1, median, na.rm = TRUE),
   num_present,
   num_missing
 )

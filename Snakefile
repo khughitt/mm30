@@ -1,8 +1,6 @@
 """
 MM25 Score generation pipeline
 
-KH 2020.02.02
-
 Combines output from fassoc feature-phenotype association pipeline to generate final
 MM25 gene and pathway weights.
 """
@@ -36,9 +34,37 @@ rule all:
                feat_level=["gene", "pathway"], category=categories),
         expand(join(out_dir, "results", "clusters", "mm25_{feat_level}_{cluster_num}_scores.feather"),
                feat_level=["gene", "pathway"], cluster_num=range(config['clustering']['num_clusters'])),
+        expand(join(out_dir, "results", "categories", "mm25_{feat_level}_survival_stats.feather"),
+                feat_level=["gene", "pathway"]),
         join(out_dir, 'expr', 'mm25_combined_expr_data.feather'),
+        join(out_dir, "summary", "gene_score_cor_mat.tsv"),
         join(out_dir, "metadata.tsv"),
         custom_gmt
+
+rule compute_mm25_ranking_correlations:
+    input:
+        join(out_dir, "results", "all", "mm25_gene_scores.feather"), 
+        expand(join(out_dir, "results", "categories", "mm25_gene_{category}_scores.feather"), 
+               category=categories),
+        expand(join(out_dir, "results", "clusters", "mm25_gene_{cluster_num}_scores.feather"),
+               cluster_num=range(config['clustering']['num_clusters']))
+    output:
+        join(out_dir, "summary", "gene_score_cor_mat.tsv")
+    run:
+        # create a matrix of alternate gene scores created from different subsets
+        # of the MM25 datasets
+        gene_scores = pd.read_feather(input[0])
+        gene_scores = gene_scores.set_index('symbol')[['sumz_wt_pval']]
+        gene_scores.columns = [os.path.basename(input[0])]
+
+        for infile in input[1:]:
+            dat = pd.read_feather(infile)
+            dat = dat.set_index('symbol')[['sumz_wt_pval']]
+            dat.columns = [os.path.basename(infile)]
+
+            gene_scores = gene_scores.join(dat, on='symbol')
+
+        gene_scores.corr().to_csv(output[0], sep='\t')
 
 rule create_combined_expr:
     output: join(out_dir, 'expr', 'mm25_combined_expr_data.feather')
@@ -52,6 +78,16 @@ rule create_custom_gene_sets:
         custom_gmt
     script:
         "src/create_custom_gmt.R"
+
+rule mm25_surv_stats:
+    input: 
+        stats=join(config['fassoc_dir'], "merged", "mm25_{feat_level}_association_stats.feather"),
+        coefs=join(config['fassoc_dir'], "merged", "mm25_{feat_level}_association_coefs.feather"),
+        mdata=join(config['fassoc_dir'], "metadata", "association_metadata.feather")
+    output:
+        join(out_dir, "results", "categories", "mm25_{feat_level}_survival_stats.feather")
+    script:
+        "src/build_survival_stats.R"
 
 rule mm25_all:
     input: 
@@ -120,10 +156,8 @@ rule cluster_covariates:
 rule create_combined_sample_metadata:
     output: join(out_dir, "metadata.tsv")
     run:
-        geo_mdata = glob.glob('/data/human/geo/3.0/*/processed/*_sample_metadata.tsv')
-        mmrf_mdata = "/data/human/mmrf-commpass/IA15/clean/clinical_data_tables/MMRF_CoMMpass_IA15_combined_metadata.tsv"
-
-        outfile = "/data/nih/mm25/%s/metadata.tsv" % (config["version"])
+        geo_mdata = glob.glob(config['metadata']['geo'])
+        mmrf_mdata = config['metadata']['mmrf'] 
 
         # combine geo/mmrf metadata into a single dataframe with columns for sample id,
         # experiment, platform, and platform_type
@@ -166,5 +200,5 @@ rule create_combined_sample_metadata:
             mdat = pd.concat([mdat, geo_mdat])
 
         # write combined metadata to disk
-        mdat.set_index('sample_id').to_csv(outfile, sep = '\t')
+        mdat.set_index('sample_id').to_csv(output[0], sep = '\t')
 
