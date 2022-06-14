@@ -1,4 +1,5 @@
 unused
 extra
 .snakemake
+.RData
 __pycache__

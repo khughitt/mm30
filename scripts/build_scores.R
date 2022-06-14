@@ -15,6 +15,11 @@ suppressMessages(library(tidyverse))
 pvals <- read_feather(snakemake@input[['pvals']])
 stats <- read_feather(snakemake@input[['stats']])
 
+# TESTING
+pvals <- read_feather("/data/proj/mm25/4.1/fassoc/merged/mm25_gene_association_pvals.feather")
+stats <- read_feather("/data/proj/mm25/4.1/fassoc/merged/mm25_gene_association_stats.feather")
+#/data/proj/mm25/4.1/fassoc/merged/mm25_gene_association_coefs.feather
+
 id_field <- colnames(pvals)[1]
 
 # normalize contributions from each dataset, if enabled;
@@ -144,6 +149,9 @@ res <- data.frame(
   num_missing
 )
 colnames(res)[1] <- id_field
+
+# drop any genes with missing values for the aggregated scores 
+res <- res[complete.cases(res), ]
 
 # reorder and store results
 res <- res %>%
