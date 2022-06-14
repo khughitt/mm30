@@ -11,22 +11,19 @@ suppressMessages(library(arrow))
 suppressMessages(library(metap))
 suppressMessages(library(tidyverse))
 
-# load dataset gene- or pathway-level p-values calculcated by fassoc
+# load dataset gene- or pathway-level p-values calculated by fassoc, along with the
+# experiment metadata
 pvals <- read_feather(snakemake@input[['pvals']])
-stats <- read_feather(snakemake@input[['stats']])
-
-# TESTING
-pvals <- read_feather("/data/proj/mm25/4.1/fassoc/merged/mm25_gene_association_pvals.feather")
-stats <- read_feather("/data/proj/mm25/4.1/fassoc/merged/mm25_gene_association_stats.feather")
-#/data/proj/mm25/4.1/fassoc/merged/mm25_gene_association_coefs.feather
+mdata <- read_feather(snakemake@input[['mdata']])
 
 id_field <- colnames(pvals)[1]
 
-# normalize contributions from each dataset, if enabled;
-# note: for some metap methods, weights can also be specified for each p-value..
+# normalize contributions from each dataset?
+# if enabled, for each experiment for which multiple covariates analyzed, for each gene,
+# the minimum p-value observed across all p-values will be used, rather than providing
+# metap with multple p-values for a single gene/experiment.
 if (snakemake@config$normalize_dataset_contributions) {
   min_pval_list <- list(pull(pvals, id_field))
-  max_stat_list <- list(pull(stats, id_field))
 
   dataset_ids <- unique(str_split(colnames(pvals)[-1], '_', simplify = TRUE)[, 1])
 
@@ -40,36 +37,16 @@ if (snakemake@config$normalize_dataset_contributions) {
     min_pvals[is.infinite(min_pvals)] <- NA
 
     min_pval_list <- c(min_pval_list, list(c(min_pvals)))
-
-    # get maximum statistics for each dataset
-    max_stats <- suppressWarnings(apply(stats[, mask, drop = FALSE], 1, function (x) {
-      x[which.max(abs(x))]
-    }))
-
-    # convert nulls to na's so that they are preserved during call to "unlist" and
-    # flatten
-    is.na(max_stats) <- lapply(max_stats, length) == 0
-    max_stats <- unlist(max_stats)
-
-    max_stats[is.infinite(max_stats)] <- NA
-
-    max_stat_list <- c(max_stat_list, list(c(max_stats)))
   } 
 
   # convert back to a tibble
   names(min_pval_list) <- c(id_field, dataset_ids)
-  names(max_stat_list) <- c(id_field, dataset_ids)
 
   pvals <- as_tibble(min_pval_list)
-  stats <- as_tibble(max_stat_list)
 }
 
 # create matrix versions of the p-values without the id column
 pval_mat <- pvals %>%
-  select(-all_of(id_field)) %>%
-  as.matrix()
-
-stat_mat <- stats %>%
   select(-all_of(id_field)) %>%
   as.matrix()
 
@@ -106,19 +83,22 @@ sumz_wrapper <- function(x) {
   }
 }
 
-# compute weighted sumz using stats as weights
+# compute weighted sumz using sqrt(sample size) as weights
+# see: https://onlinelibrary.wiley.com/doi/10.1111/j.1420-9101.2011.02297.x
+weights <- sqrt(mdata$num_samples[match(colnames(pval_mat), mdata$dataset)])
+
 sumz_wt_pvals <- c()
 
 for (i in 1:nrow(pvals)) {
   row_pvals <- pval_mat[i, ]
-  row_stats <- stat_mat[i, ]
 
-  row_pvals <- row_pvals[!is.na(row_pvals)]
-  row_stats <- row_stats[!is.na(row_stats)]
+  mask <- !is.na(row_pvals)
+
+  row_pvals <- row_pvals[mask]
+  filtered_weights <- weights[mask]
 
   # on rare occasions, sumz may fail for certain edge cases,
-  # ex: sumz(c(6.44634146544944e-09, 1), c(33.7, 1133259850869713))
-  # tryCatch block used to allow snakemake to continue
+  # a tryCatch block is used to allow snakemake to continue
 
   # if there are one or fewer pvals remaining, 
   if (length(row_pvals) == 1) {
@@ -127,7 +107,7 @@ for (i in 1:nrow(pvals)) {
     sumz_wt_pvals <- c(sumz_wt_pvals, NA)
   } else {
     sumz_pval <- tryCatch({
-      as.numeric(sumz(row_pvals, weights = abs(row_stats))$p)
+      as.numeric(sumz(row_pvals, weights = filtered_weights)$p)
     }, error = function(e) {
       NA
     })

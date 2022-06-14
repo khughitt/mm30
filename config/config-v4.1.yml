@@ -17,8 +17,9 @@ metadata:
   mmrf: "/data/clean/mmrf/IA18/clinical_data_tables/MMRF_CoMMpass_IA18_combined_metadata.feather"
 
 # If true, each dataset will contribute the same amount to the final combined
-# p-values / scores. In cases where multiple covariates are assessed for a dataset,
-# the "best" value (e.g. minimum p-value) will be used for each gene.
+# p-values / scores. 
+# In cases where multiple covariates are assessed for a dataset, the minimum p-value
+# will be used for each gene.
 normalize_dataset_contributions: true
 
 # gene set settings;

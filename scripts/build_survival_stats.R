@@ -1,14 +1,8 @@
 #!/bin/env Rscript
 #
-# Combines feature associations from multiple sources
-#
-# Note: for some useful notes and diagrams on choosing a method to combine p-values,
-# refer to figures 4-5 in the [metap compare
-# vignette](https://cran.r-project.org/web/packages/metap/vignettes/compare.pdf).
-# ----------
+# Aggregates and summarized survival stats from multiple sources
 #
 suppressMessages(library(arrow))
-suppressMessages(library(metap))
 suppressMessages(library(tidyverse))
 
 # load dataset gene- or pathway-level test statistics and model coefficients
