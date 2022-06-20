@@ -50,6 +50,11 @@ pval_mat <- pvals %>%
   select(-all_of(id_field)) %>%
   as.matrix()
 
+# sanity check
+if (!all(colnames(pval_mat) %in% mdata$dataset)) {
+  stop("Missing metadata for one or more datasets!")
+}
+
 # count number of missing values for each gene or gene set
 num_missing <- apply(pval_mat, 1, function(x) {
   sum(is.na(x))
