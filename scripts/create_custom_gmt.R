@@ -1,6 +1,6 @@
 #!/bin/env Rscript
 #
-# Creates a custom filtered gmt file containing the top N highest ranking MM25
+# Creates a custom filtered gmt file containing the top N highest ranking MM29
 # pathways/gene sets.
 #
 suppressMessages(library(GSEABase))
@@ -12,7 +12,7 @@ options(stringsAsFactors = FALSE)
 # largest custom gmt file to generate (# gene sets)
 max_gmt_size <- max(snakemake@config$gene_sets$sizes)
 
-# load MM25 pathway rankings
+# load MM29 pathway rankings
 gene_set_ranks <- read_feather(snakemake@input[[1]])
 gene_set_ranks$gene_set <- as.character(gene_set_ranks$gene_set)
 
@@ -47,7 +47,7 @@ for (gset in names(gene_sets)) {
 }
 
 # create a mapping from <collection, gene_set> pairs to the merged "<collection>_<gene_set>"
-# identifiers used in MM25
+# identifiers used in MM29
 mapping <- NULL
 
 for (collection in names(gene_sets)) {
@@ -59,7 +59,7 @@ mapping$combined_id <- paste(mapping$collection, mapping$gene_set, sep = '_')
 
 # collapse nested collection/gene set list into a single list indexed
 # by combined <collection>_<gene_set> identifiers to make it easier to find
-# entries using the MM25 combined identifiers
+# entries using the MM29 combined identifiers
 combined_gene_sets <- list()
 
 for (collection in names(gene_sets)) {
@@ -69,7 +69,7 @@ for (collection in names(gene_sets)) {
   combined_gene_sets <- c(combined_gene_sets, collection_list)
 }
 
-# order by MM25 gene set rank and limit to size of largest custom gmt to be created
+# order by MM29 gene set rank and limit to size of largest custom gmt to be created
 combined_gene_sets <- combined_gene_sets[top_gene_sets]
 
 max_genes <- max(unlist(lapply(combined_gene_sets, length)))
@@ -98,7 +98,7 @@ for (i in 1:length(combined_gene_sets)) {
 out_dir <- dirname(snakemake@output[[1]])
 
 for (num_gene_sets in snakemake@config$gene_sets$sizes) {
-  outfile <- file.path(out_dir, sprintf('mm25_top_%d_pathways.gmt', num_gene_sets))
+  outfile <- file.path(out_dir, sprintf('mm29_top_%d_pathways.gmt', num_gene_sets))
 
   # get the first N entries 
   output <- apply(res[1:num_gene_sets, ], 1, function(x) { 

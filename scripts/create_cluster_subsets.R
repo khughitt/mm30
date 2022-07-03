@@ -1,6 +1,6 @@
 #!/bin/env Rscript
 #
-# Creates subsetted versions of the full MM25 p-value / test statistic results which
+# Creates subsetted versions of the full MM29 p-value / test statistic results which
 # include only covariates associated with a particular cluster
 #
 suppressMessages(library(arrow))
