@@ -37,6 +37,23 @@ rule all:
         os.path.join(out_dir, "summary", "gene_score_cor_mat.feather"),
         os.path.join(out_dir, "metadata.feather")
 
+rule build_packages:
+    input: 
+        expand(os.path.join(out_dir, "packages", "scores", "mm29_{feat_level}_scores", "datapackage.yml"),
+                feat_level=["gene", "pathway"])
+
+rule package_results:
+    input:
+        os.path.join(out_dir, "results", "all", "mm29_{feat_level}_scores.feather"), 
+    output:
+        os.path.join(out_dir, "packages", "scores", "mm29_{feat_level}_scores", "datapackage.yml"),
+        os.path.join(out_dir, "packages", "scores", "mm29_{feat_level}_scores", "data.csv"), 
+    params:
+        id=lambda w: f"mm29_{w.feat_level}_all_scores",
+        title=lambda w: f"MM29 {w.feat_level.capitalize()} scores"
+    script:
+        "scripts/package_scores.py"
+
 rule compute_mm29_ranking_correlations:
     input:
         os.path.join(out_dir, "results", "all", "mm29_gene_scores.feather"), 
@@ -69,17 +86,17 @@ rule create_combined_expr:
 
 rule mm29_surv_stats:
     input: 
-        stats=os.path.join(config['fassoc_dir'], "merged", "mm29_{feat_level}_association_stats.feather"),
-        coefs=os.path.join(config['fassoc_dir'], "merged", "mm29_{feat_level}_association_coefs.feather"),
+        stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
+        coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
         os.path.join(out_dir, "results", "categories", "mm29_{feat_level}_survival_stats.feather")
     script:
         "scripts/build_survival_stats.R"
 
-rule mm29_all:
+rule build_mm29_all_scores:
     input: 
-        pvals=os.path.join(config['fassoc_dir'], "merged", "mm29_{feat_level}_association_pvals.feather"),
+        pvals=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
         os.path.join(out_dir, "results", "all", "mm29_{feat_level}_scores.feather")
@@ -106,9 +123,9 @@ rule mm29_categories:
 
 rule create_mm29_cluster_subsets:
     input:
-        pvals=os.path.join(config['fassoc_dir'], "merged", "mm29_{feat_level}_association_pvals.feather"),
-        stats=os.path.join(config['fassoc_dir'], "merged", "mm29_{feat_level}_association_stats.feather"),
-        coefs=os.path.join(config['fassoc_dir'], "merged", "mm29_{feat_level}_association_coefs.feather"),
+        pvals=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather"),
+        stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
+        coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
         clusters=os.path.join(out_dir, "clusters", "mm29_{feat_level}_covariate_clusters.feather")
     output:
         pvals=os.path.join(out_dir, "subsets", "clusters", "mm29_{feat_level}_{cluster_num}_pvals.feather"),
@@ -119,9 +136,9 @@ rule create_mm29_cluster_subsets:
 
 rule create_mm29_category_subsets:
     input:
-        pvals=os.path.join(config['fassoc_dir'], "merged", "mm29_{feat_level}_association_pvals.feather"),
-        stats=os.path.join(config['fassoc_dir'], "merged", "mm29_{feat_level}_association_stats.feather"),
-        coefs=os.path.join(config['fassoc_dir'], "merged", "mm29_{feat_level}_association_coefs.feather"),
+        pvals=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather"),
+        stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
+        coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
         pvals=os.path.join(out_dir, "subsets", "categories", "mm29_{feat_level}_{category}_pvals.feather"),
@@ -132,7 +149,7 @@ rule create_mm29_category_subsets:
 
 rule cluster_covariates:
     input: 
-        os.path.join(config['fassoc_dir'], "merged", "mm29_{feat_level}_association_pvals.feather")
+        os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather")
     output:
         os.path.join(out_dir, "clusters", "mm29_{feat_level}_covariate_clusters.feather")
     script:

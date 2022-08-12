@@ -1,4 +1,4 @@
-conda-forge::python>=3.9
+conda-forge::python>=3.10
 conda-forge::r-base
 bioconductor-gseabase
 r-annotables
@@ -9,8 +9,10 @@ r-metap
 r-nmf
 r-tidyverse
 r-viridis
+frictionless
 pyarrow
 numpy
 pandas
+pyyaml
 scikit-learn
 snakemake-minimal
