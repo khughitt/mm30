@@ -1,0 +1,44 @@
+#
+# MM29 Configuration
+#
+out_dir: "/data/proj/mm25"
+version: "4.2"
+
+fassoc_dir: "/data/proj/mm25/4.2/fassoc"
+
+# location of processed gene expression data; used to construct a combined expr
+# data matrix for convenience
+expr_data:
+  geo: "/data/proj/mm25/4.2/geo/final/*/data.feather"
+  mmrf: "/data/clean/mmrf/IA18/rnaseq/611e783706f8c500013f9456_Expression Estimates - Gene Based_MMRF_CoMMpass_IA18_salmon_geneUnstrandedIgFiltered_tpm.feather"
+
+metadata:
+  geo: "/data/proj/mm25/4.2/geo/final/*/column-metadata.feather"
+  mmrf: "/data/clean/mmrf/IA18/clinical_data_tables/MMRF_CoMMpass_IA18_combined_metadata.feather"
+
+# If true, each dataset will contribute the same amount to the final combined
+# p-values / scores. 
+# In cases where multiple covariates are assessed for a dataset, the minimum p-value
+# will be used for each gene.
+normalize_dataset_contributions: true
+
+# gene set settings;
+# the specified input gmt files should be the same used in the original MM29 generation
+# for each size, N, a gmt file will be constructed containing
+# only the top N MM29-ranked gene sets;
+gene_sets:
+  gmt: "/data/raw/msigdb/v7.5.1/msigdb.v7.5.1.symbols.gmt"
+  sizes: [50, 100, 150, 200, 250, 500, 750, 1000]
+  #gmts: "/data/clean/msigdb/v7.0/*.gmt"
+
+#
+# clustering settings
+#
+
+# maximum number of missing values allowed for a gene to be used in clustering
+# covariates
+clustering:
+  method: "gaussian_mixture"
+  num_clusters: 2
+  max_missing: 5
+

@@ -19,7 +19,6 @@ dat = dat.drop([feat_id], axis = 1)
 # store column names
 cnames = dat.columns.tolist()
 
-# exclude genes with excessive missing values 
 if dat.isnull().sum().sum() > 0:
     num_nas = dat.shape[1] - dat.apply(lambda x: x.count(), axis=1)
 
@@ -50,5 +49,6 @@ else:
     sys.exit("Invalid clustering method specified!")
 
 # store result
+#breakpoint()
 res = pd.DataFrame({'covariate': cnames, 'cluster': clusters})
 res.to_feather(snakemake.output[0])

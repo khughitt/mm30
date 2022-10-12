@@ -9,6 +9,8 @@ import os
 import re
 import pandas as pd
 
+configfile: "config/config-v4.2.yml"
+
 # base input and output data dirs;
 # output comes from the separate feature association ("fassoc") pipeline
 out_dir = os.path.join(config["out_dir"], config["version"], "scores")
@@ -33,6 +35,8 @@ rule all:
                feat_level=["gene", "pathway"], cluster_num=range(config['clustering']['num_clusters'])),
         expand(os.path.join(out_dir, "results", "categories", "mm29_{feat_level}_survival_stats.feather"),
                 feat_level=["gene", "pathway"]),
+        expand(os.path.join(out_dir, "results", "combined", "mm29_{feat_level}_scores.feather"),
+                feat_level=["gene", "pathway"]),
         os.path.join(out_dir, 'expr', 'mm29_combined_expr_data.feather'),
         os.path.join(out_dir, "summary", "gene_score_cor_mat.feather"),
         os.path.join(out_dir, "metadata.feather")
@@ -53,6 +57,17 @@ rule package_results:
         title=lambda w: f"MM29 {w.feat_level.capitalize()} scores"
     script:
         "scripts/package_scores.py"
+
+rule combine_rankings:
+    input:
+        os.path.join(out_dir, "results", "all", "mm29_{feat_level}_scores.feather"),
+        os.path.join(out_dir, "results/categories/mm29_{feat_level}_disease_stage_scores.feather"), 
+        os.path.join(out_dir, "results/categories/mm29_{feat_level}_survival_scores.feather"), 
+        os.path.join(out_dir, "results/categories/mm29_{feat_level}_treatment_scores.feather")
+    output:
+        os.path.join(out_dir, "results", "combined", "mm29_{feat_level}_scores.feather")
+    script:
+        "scripts/combine_rankings.py"
 
 rule compute_mm29_ranking_correlations:
     input:
