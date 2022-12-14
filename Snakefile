@@ -21,9 +21,11 @@ phenotypes = pd.read_feather(phenotypes_infile)
 
 # phenotype categories
 categories = phenotypes.category.unique()
+sample_types = ['patient', 'cell_line']
 
 wildcard_constraints:
-    category="|".join(categories)
+    category="|".join(categories),
+    sample_type="|".join(sample_types)
 
 rule all:
     input:
@@ -31,6 +33,8 @@ rule all:
                feat_level=["gene", "pathway"]),
         expand(os.path.join(out_dir, "results", "categories", "mm29_{feat_level}_{category}_scores.feather"), 
                feat_level=["gene", "pathway"], category=categories),
+        expand(os.path.join(out_dir, "results", "sample_types", "mm29_{feat_level}_{sample_type}_scores.feather"), 
+               feat_level=["gene", "pathway"], sample_type=sample_types),
         expand(os.path.join(out_dir, "results", "clusters", "mm29_{feat_level}_{cluster_num}_scores.feather"),
                feat_level=["gene", "pathway"], cluster_num=range(config['clustering']['num_clusters'])),
         expand(os.path.join(out_dir, "results", "categories", "mm29_{feat_level}_survival_stats.feather"),
@@ -118,7 +122,7 @@ rule build_mm29_all_scores:
     script:
         "scripts/build_scores.R"
 
-rule mm29_clustered:
+rule mm29_clusters:
     input: 
         pvals=os.path.join(out_dir, "subsets", "clusters", "mm29_{feat_level}_{cluster_num}_pvals.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
@@ -133,6 +137,15 @@ rule mm29_categories:
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
         os.path.join(out_dir, "results", "categories", "mm29_{feat_level}_{category}_scores.feather")
+    script:
+        "scripts/build_scores.R"
+
+rule mm29_sample_types:
+    input: 
+        pvals=os.path.join(out_dir, "subsets", "sample_types", "mm29_{feat_level}_{sample_type}_pvals.feather"),
+        mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
+    output:
+        os.path.join(out_dir, "results", "sample_types", "mm29_{feat_level}_{sample_type}_scores.feather")
     script:
         "scripts/build_scores.R"
 
@@ -162,6 +175,19 @@ rule create_mm29_category_subsets:
     script:
         "scripts/create_category_subsets.R"
 
+rule create_sample_type_subsets:
+    input:
+        pvals=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather"),
+        stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
+        coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
+        mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
+    output:
+        pvals=os.path.join(out_dir, "subsets", "sample_types", "mm29_{feat_level}_{sample_type}_pvals.feather"),
+        stats=os.path.join(out_dir, "subsets", "sample_types", "mm29_{feat_level}_{sample_type}_stats.feather"),
+        coefs=os.path.join(out_dir, "subsets", "sample_types", "mm29_{feat_level}_{sample_type}_coefs.feather")
+    script:
+        "scripts/create_sample_type_subsets.R"
+
 rule cluster_covariates:
     input: 
         os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather")
@@ -174,8 +200,8 @@ rule create_combined_sample_metadata:
     output:
         os.path.join(out_dir, "metadata.feather")
     run:
-        geo_mdata = glob.glob(config['metadata']['geo'])
-        mmrf_mdata = config['metadata']['mmrf'] 
+        geo_mdata = glob.glob(config['sample_metadata']['geo'])
+        mmrf_mdata = config['sample_metadata']['mmrf'] 
 
         # combine geo/mmrf metadata into a single dataframe with columns for sample id,
         # experiment, platform, and platform_type

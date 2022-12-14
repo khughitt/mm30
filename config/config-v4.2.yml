@@ -12,7 +12,7 @@ expr_data:
   geo: "/data/proj/mm25/4.2/geo/final/*/data.feather"
   mmrf: "/data/clean/mmrf/IA18/rnaseq/611e783706f8c500013f9456_Expression Estimates - Gene Based_MMRF_CoMMpass_IA18_salmon_geneUnstrandedIgFiltered_tpm.feather"
 
-metadata:
+sample_metadata:
   geo: "/data/proj/mm25/4.2/geo/final/*/column-metadata.feather"
   mmrf: "/data/clean/mmrf/IA18/clinical_data_tables/MMRF_CoMMpass_IA18_combined_metadata.feather"
 
