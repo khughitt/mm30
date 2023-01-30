@@ -1,15 +1,15 @@
 """
-MM29 Score generation pipeline
+MM30 Score generation pipeline
 
 Combines output from fassoc feature-phenotype association pipeline to generate final
-MM29 gene and pathway weights.
+MM30 gene and pathway weights.
 """
 import glob
 import os
 import re
 import pandas as pd
 
-configfile: "config/config-v4.2.yml"
+configfile: "config/config-v5.0.yml"
 
 # base input and output data dirs;
 # output comes from the separate feature association ("fassoc") pipeline
@@ -29,62 +29,62 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand(os.path.join(out_dir, "results", "all", "mm29_{feat_level}_scores.feather"), 
+        expand(os.path.join(out_dir, "results", "all", "mm30_{feat_level}_scores.feather"), 
                feat_level=["gene", "pathway"]),
-        expand(os.path.join(out_dir, "results", "categories", "mm29_{feat_level}_{category}_scores.feather"), 
+        expand(os.path.join(out_dir, "results", "categories", "mm30_{feat_level}_{category}_scores.feather"), 
                feat_level=["gene", "pathway"], category=categories),
-        expand(os.path.join(out_dir, "results", "sample_types", "mm29_{feat_level}_{sample_type}_scores.feather"), 
+        expand(os.path.join(out_dir, "results", "sample_types", "mm30_{feat_level}_{sample_type}_scores.feather"), 
                feat_level=["gene", "pathway"], sample_type=sample_types),
-        expand(os.path.join(out_dir, "results", "clusters", "mm29_{feat_level}_{cluster_num}_scores.feather"),
+        expand(os.path.join(out_dir, "results", "clusters", "mm30_{feat_level}_{cluster_num}_scores.feather"),
                feat_level=["gene", "pathway"], cluster_num=range(config['clustering']['num_clusters'])),
-        expand(os.path.join(out_dir, "results", "categories", "mm29_{feat_level}_survival_stats.feather"),
+        expand(os.path.join(out_dir, "results", "categories", "mm30_{feat_level}_survival_stats.feather"),
                 feat_level=["gene", "pathway"]),
-        expand(os.path.join(out_dir, "results", "combined", "mm29_{feat_level}_scores.feather"),
+        expand(os.path.join(out_dir, "results", "combined", "mm30_{feat_level}_scores.feather"),
                 feat_level=["gene", "pathway"]),
-        os.path.join(out_dir, 'expr', 'mm29_combined_expr_data.feather'),
+        os.path.join(out_dir, 'expr', 'mm30_combined_expr_data.feather'),
         os.path.join(out_dir, "summary", "gene_score_cor_mat.feather"),
         os.path.join(out_dir, "metadata.feather")
 
 rule build_packages:
     input: 
-        expand(os.path.join(out_dir, "packages", "scores", "mm29_{feat_level}_scores", "datapackage.yml"),
+        expand(os.path.join(out_dir, "packages", "scores", "mm30_{feat_level}_scores", "datapackage.yml"),
                 feat_level=["gene", "pathway"])
 
 rule package_results:
     input:
-        os.path.join(out_dir, "results", "all", "mm29_{feat_level}_scores.feather"), 
+        os.path.join(out_dir, "results", "all", "mm30_{feat_level}_scores.feather"), 
     output:
-        os.path.join(out_dir, "packages", "scores", "mm29_{feat_level}_scores", "datapackage.yml"),
-        os.path.join(out_dir, "packages", "scores", "mm29_{feat_level}_scores", "data.csv"), 
+        os.path.join(out_dir, "packages", "scores", "mm30_{feat_level}_scores", "datapackage.yml"),
+        os.path.join(out_dir, "packages", "scores", "mm30_{feat_level}_scores", "data.csv"), 
     params:
-        id=lambda w: f"mm29_{w.feat_level}_all_scores",
-        title=lambda w: f"MM29 {w.feat_level.capitalize()} scores"
+        id=lambda w: f"mm30_{w.feat_level}_all_scores",
+        title=lambda w: f"MM30 {w.feat_level.capitalize()} scores"
     script:
         "scripts/package_scores.py"
 
 rule combine_rankings:
     input:
-        os.path.join(out_dir, "results", "all", "mm29_{feat_level}_scores.feather"),
-        os.path.join(out_dir, "results/categories/mm29_{feat_level}_disease_stage_scores.feather"), 
-        os.path.join(out_dir, "results/categories/mm29_{feat_level}_survival_scores.feather"), 
-        os.path.join(out_dir, "results/categories/mm29_{feat_level}_treatment_scores.feather")
+        os.path.join(out_dir, "results", "all", "mm30_{feat_level}_scores.feather"),
+        os.path.join(out_dir, "results/categories/mm30_{feat_level}_disease_stage_scores.feather"), 
+        os.path.join(out_dir, "results/categories/mm30_{feat_level}_survival_scores.feather"), 
+        os.path.join(out_dir, "results/categories/mm30_{feat_level}_treatment_scores.feather")
     output:
-        os.path.join(out_dir, "results", "combined", "mm29_{feat_level}_scores.feather")
+        os.path.join(out_dir, "results", "combined", "mm30_{feat_level}_scores.feather")
     script:
         "scripts/combine_rankings.py"
 
-rule compute_mm29_ranking_correlations:
+rule compute_mm30_ranking_correlations:
     input:
-        os.path.join(out_dir, "results", "all", "mm29_gene_scores.feather"), 
-        expand(os.path.join(out_dir, "results", "categories", "mm29_gene_{category}_scores.feather"), 
+        os.path.join(out_dir, "results", "all", "mm30_gene_scores.feather"), 
+        expand(os.path.join(out_dir, "results", "categories", "mm30_gene_{category}_scores.feather"), 
                category=categories),
-        expand(os.path.join(out_dir, "results", "clusters", "mm29_gene_{cluster_num}_scores.feather"),
+        expand(os.path.join(out_dir, "results", "clusters", "mm30_gene_{cluster_num}_scores.feather"),
                cluster_num=range(config['clustering']['num_clusters']))
     output:
         os.path.join(out_dir, "summary", "gene_score_cor_mat.feather")
     run:
         # create a matrix of alternate gene scores created from different subsets
-        # of the MM29 datasets
+        # of the MM30 datasets
         gene_scores = pd.read_feather(input[0])
         gene_scores = gene_scores.set_index('symbol')[['sumz_wt_pval']]
         gene_scores.columns = [os.path.basename(input[0])]
@@ -99,79 +99,79 @@ rule compute_mm29_ranking_correlations:
         gene_scores.corr().reset_index().rename(columns={"index": "file"}).to_feather(output[0])
 
 rule create_combined_expr:
-    output: os.path.join(out_dir, 'expr', 'mm29_combined_expr_data.feather')
+    output: os.path.join(out_dir, 'expr', 'mm30_combined_expr_data.feather')
     script:
         "scripts/combine_expr_data.R"
 
-rule mm29_surv_stats:
+rule mm30_surv_stats:
     input: 
         stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
         coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        os.path.join(out_dir, "results", "categories", "mm29_{feat_level}_survival_stats.feather")
+        os.path.join(out_dir, "results", "categories", "mm30_{feat_level}_survival_stats.feather")
     script:
         "scripts/build_survival_stats.R"
 
-rule build_mm29_all_scores:
+rule build_mm30_all_scores:
     input: 
         pvals=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        os.path.join(out_dir, "results", "all", "mm29_{feat_level}_scores.feather")
+        os.path.join(out_dir, "results", "all", "mm30_{feat_level}_scores.feather")
     script:
         "scripts/build_scores.R"
 
-rule mm29_clusters:
+rule mm30_clusters:
     input: 
-        pvals=os.path.join(out_dir, "subsets", "clusters", "mm29_{feat_level}_{cluster_num}_pvals.feather"),
+        pvals=os.path.join(out_dir, "subsets", "clusters", "mm30_{feat_level}_{cluster_num}_pvals.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        os.path.join(out_dir, "results", "clusters", "mm29_{feat_level}_{cluster_num}_scores.feather")
+        os.path.join(out_dir, "results", "clusters", "mm30_{feat_level}_{cluster_num}_scores.feather")
     script:
         "scripts/build_scores.R"
 
-rule mm29_categories:
+rule mm30_categories:
     input: 
-        pvals=os.path.join(out_dir, "subsets", "categories", "mm29_{feat_level}_{category}_pvals.feather"),
+        pvals=os.path.join(out_dir, "subsets", "categories", "mm30_{feat_level}_{category}_pvals.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        os.path.join(out_dir, "results", "categories", "mm29_{feat_level}_{category}_scores.feather")
+        os.path.join(out_dir, "results", "categories", "mm30_{feat_level}_{category}_scores.feather")
     script:
         "scripts/build_scores.R"
 
-rule mm29_sample_types:
+rule mm30_sample_types:
     input: 
-        pvals=os.path.join(out_dir, "subsets", "sample_types", "mm29_{feat_level}_{sample_type}_pvals.feather"),
+        pvals=os.path.join(out_dir, "subsets", "sample_types", "mm30_{feat_level}_{sample_type}_pvals.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        os.path.join(out_dir, "results", "sample_types", "mm29_{feat_level}_{sample_type}_scores.feather")
+        os.path.join(out_dir, "results", "sample_types", "mm30_{feat_level}_{sample_type}_scores.feather")
     script:
         "scripts/build_scores.R"
 
-rule create_mm29_cluster_subsets:
+rule create_mm30_cluster_subsets:
     input:
         pvals=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather"),
         stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
         coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
-        clusters=os.path.join(out_dir, "clusters", "mm29_{feat_level}_covariate_clusters.feather")
+        clusters=os.path.join(out_dir, "clusters", "mm30_{feat_level}_covariate_clusters.feather")
     output:
-        pvals=os.path.join(out_dir, "subsets", "clusters", "mm29_{feat_level}_{cluster_num}_pvals.feather"),
-        stats=os.path.join(out_dir, "subsets", "clusters", "mm29_{feat_level}_{cluster_num}_stats.feather"),
-        coefs=os.path.join(out_dir, "subsets", "clusters", "mm29_{feat_level}_{cluster_num}_coefs.feather")
+        pvals=os.path.join(out_dir, "subsets", "clusters", "mm30_{feat_level}_{cluster_num}_pvals.feather"),
+        stats=os.path.join(out_dir, "subsets", "clusters", "mm30_{feat_level}_{cluster_num}_stats.feather"),
+        coefs=os.path.join(out_dir, "subsets", "clusters", "mm30_{feat_level}_{cluster_num}_coefs.feather")
     script:
         "scripts/create_cluster_subsets.R"
 
-rule create_mm29_category_subsets:
+rule create_mm30_category_subsets:
     input:
         pvals=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather"),
         stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
         coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        pvals=os.path.join(out_dir, "subsets", "categories", "mm29_{feat_level}_{category}_pvals.feather"),
-        stats=os.path.join(out_dir, "subsets", "categories", "mm29_{feat_level}_{category}_stats.feather"),
-        coefs=os.path.join(out_dir, "subsets", "categories", "mm29_{feat_level}_{category}_coefs.feather")
+        pvals=os.path.join(out_dir, "subsets", "categories", "mm30_{feat_level}_{category}_pvals.feather"),
+        stats=os.path.join(out_dir, "subsets", "categories", "mm30_{feat_level}_{category}_stats.feather"),
+        coefs=os.path.join(out_dir, "subsets", "categories", "mm30_{feat_level}_{category}_coefs.feather")
     script:
         "scripts/create_category_subsets.R"
 
@@ -182,9 +182,9 @@ rule create_sample_type_subsets:
         coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        pvals=os.path.join(out_dir, "subsets", "sample_types", "mm29_{feat_level}_{sample_type}_pvals.feather"),
-        stats=os.path.join(out_dir, "subsets", "sample_types", "mm29_{feat_level}_{sample_type}_stats.feather"),
-        coefs=os.path.join(out_dir, "subsets", "sample_types", "mm29_{feat_level}_{sample_type}_coefs.feather")
+        pvals=os.path.join(out_dir, "subsets", "sample_types", "mm30_{feat_level}_{sample_type}_pvals.feather"),
+        stats=os.path.join(out_dir, "subsets", "sample_types", "mm30_{feat_level}_{sample_type}_stats.feather"),
+        coefs=os.path.join(out_dir, "subsets", "sample_types", "mm30_{feat_level}_{sample_type}_coefs.feather")
     script:
         "scripts/create_sample_type_subsets.R"
 
@@ -192,7 +192,7 @@ rule cluster_covariates:
     input: 
         os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather")
     output:
-        os.path.join(out_dir, "clusters", "mm29_{feat_level}_covariate_clusters.feather")
+        os.path.join(out_dir, "clusters", "mm30_{feat_level}_covariate_clusters.feather")
     script:
         "scripts/cluster_covariates.py"
 
@@ -214,8 +214,8 @@ rule create_combined_sample_metadata:
         mdat['platform_id'] = ['GPL16791'] * mdat.shape[0] # HiSeq 2500
         mdat['platform_type'] = ['RNA-Seq'] * mdat.shape[0]
 
-        # microarray platforms included in MM29 (v4.1)
-        mm29_microarray_platforms = ["GPL96", "GPL97", "GPL570", "GPL10558", "GPL5175", "GPL6244", "GPL25401", "GPL4819"]
+        # microarray platforms included in MM30
+        mm30_microarray_platforms = ["GPL96", "GPL97", "GPL570", "GPL10558", "GPL5175", "GPL6244", "GPL25401", "GPL4819"]
 
         # geo
         for infile in geo_mdata:
@@ -232,7 +232,7 @@ rule create_combined_sample_metadata:
             geo_mdat['experiment'] = [geo_id] * geo_mdat.shape[0]
 
             # determine platform type
-            if geo_mdat.platform_id.iloc[0] in mm29_microarray_platforms:
+            if geo_mdat.platform_id.iloc[0] in mm30_microarray_platforms:
                 geo_mdat['platform_type'] = ['Microarray'] * geo_mdat.shape[0]
             else:
                 geo_mdat['platform_type'] = ['RNA-Seq'] * geo_mdat.shape[0]
