@@ -5,7 +5,10 @@
 # Note: for some useful notes and diagrams on choosing a method to combine p-values,
 # refer to figures 4-5 in the [metap compare
 # vignette](https://cran.r-project.org/web/packages/metap/vignettes/compare.pdf).
-# ----------
+#
+# Warnings may be raised by sumz(), if P-values equal to "1" are encountered. These are handled
+# automatically by the method.
+# https://www.rdocumentation.org/packages/metap/versions/1.8/topics/sumz
 #
 suppressMessages(library(arrow))
 suppressMessages(library(metap))
@@ -37,7 +40,7 @@ if (snakemake@config$normalize_dataset_contributions) {
     min_pvals[is.infinite(min_pvals)] <- NA
 
     min_pval_list <- c(min_pval_list, list(c(min_pvals)))
-  } 
+  }
 
   # convert back to a tibble
   names(min_pval_list) <- c(id_field, dataset_ids)

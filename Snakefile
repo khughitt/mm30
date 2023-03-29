@@ -9,7 +9,7 @@ import os
 import re
 import pandas as pd
 
-configfile: "config/config-v5.0.yml"
+configfile: "config/config-v6.0.yml"
 
 # base input and output data dirs;
 # output comes from the separate feature association ("fassoc") pipeline
@@ -35,8 +35,6 @@ rule all:
                feat_level=["gene", "pathway"], category=categories),
         expand(os.path.join(out_dir, "results", "sample_types", "mm30_{feat_level}_{sample_type}_scores.feather"), 
                feat_level=["gene", "pathway"], sample_type=sample_types),
-        expand(os.path.join(out_dir, "results", "clusters", "mm30_{feat_level}_{cluster_num}_scores.feather"),
-               feat_level=["gene", "pathway"], cluster_num=range(config['clustering']['num_clusters'])),
         expand(os.path.join(out_dir, "results", "categories", "mm30_{feat_level}_survival_stats.feather"),
                 feat_level=["gene", "pathway"]),
         expand(os.path.join(out_dir, "results", "combined", "mm30_{feat_level}_scores.feather"),
@@ -77,9 +75,7 @@ rule compute_mm30_ranking_correlations:
     input:
         os.path.join(out_dir, "results", "all", "mm30_gene_scores.feather"), 
         expand(os.path.join(out_dir, "results", "categories", "mm30_gene_{category}_scores.feather"), 
-               category=categories),
-        expand(os.path.join(out_dir, "results", "clusters", "mm30_gene_{cluster_num}_scores.feather"),
-               cluster_num=range(config['clustering']['num_clusters']))
+               category=categories)
     output:
         os.path.join(out_dir, "summary", "gene_score_cor_mat.feather")
     run:
@@ -122,15 +118,6 @@ rule build_mm30_all_scores:
     script:
         "scripts/build_scores.R"
 
-rule mm30_clusters:
-    input: 
-        pvals=os.path.join(out_dir, "subsets", "clusters", "mm30_{feat_level}_{cluster_num}_pvals.feather"),
-        mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
-    output:
-        os.path.join(out_dir, "results", "clusters", "mm30_{feat_level}_{cluster_num}_scores.feather")
-    script:
-        "scripts/build_scores.R"
-
 rule mm30_categories:
     input: 
         pvals=os.path.join(out_dir, "subsets", "categories", "mm30_{feat_level}_{category}_pvals.feather"),
@@ -148,19 +135,6 @@ rule mm30_sample_types:
         os.path.join(out_dir, "results", "sample_types", "mm30_{feat_level}_{sample_type}_scores.feather")
     script:
         "scripts/build_scores.R"
-
-rule create_mm30_cluster_subsets:
-    input:
-        pvals=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather"),
-        stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
-        coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
-        clusters=os.path.join(out_dir, "clusters", "mm30_{feat_level}_covariate_clusters.feather")
-    output:
-        pvals=os.path.join(out_dir, "subsets", "clusters", "mm30_{feat_level}_{cluster_num}_pvals.feather"),
-        stats=os.path.join(out_dir, "subsets", "clusters", "mm30_{feat_level}_{cluster_num}_stats.feather"),
-        coefs=os.path.join(out_dir, "subsets", "clusters", "mm30_{feat_level}_{cluster_num}_coefs.feather")
-    script:
-        "scripts/create_cluster_subsets.R"
 
 rule create_mm30_category_subsets:
     input:
@@ -187,14 +161,6 @@ rule create_sample_type_subsets:
         coefs=os.path.join(out_dir, "subsets", "sample_types", "mm30_{feat_level}_{sample_type}_coefs.feather")
     script:
         "scripts/create_sample_type_subsets.R"
-
-rule cluster_covariates:
-    input: 
-        os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather")
-    output:
-        os.path.join(out_dir, "clusters", "mm30_{feat_level}_covariate_clusters.feather")
-    script:
-        "scripts/cluster_covariates.py"
 
 rule create_combined_sample_metadata:
     output:

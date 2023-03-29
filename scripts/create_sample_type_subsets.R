@@ -1,6 +1,6 @@
 #!/bin/env Rscript
 #
-# Creates subsetted versions of the full MM29 p-value / test statistic results which
+# Creates subsetted versions of the full MM30 p-value / test statistic results which
 # include either patient or cell line samples.
 #
 suppressMessages(library(arrow))
@@ -15,7 +15,7 @@ coefs <- read_feather(snakemake@input[['coefs']])
 id_field <- colnames(pvals)[1]
 
 # load experiment-level metadata
-experiment_mdata <- read_tsv("metadata/mm29_experiment_metadata.tsv")
+experiment_mdata <- read_tsv("metadata/mm30_experiment_metadata.tsv")
 
 # get relevant experiment ids; excludes single "mixed" experiment
 if (snakemake@wildcards$sample_type == "patient") {
