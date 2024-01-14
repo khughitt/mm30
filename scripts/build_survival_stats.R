@@ -5,19 +5,21 @@
 suppressMessages(library(arrow))
 suppressMessages(library(tidyverse))
 
+snek <- snakemake
+
 # load dataset gene- or pathway-level test statistics and model coefficients
-stats <- read_feather(snakemake@input[['stats']])
-coefs <- read_feather(snakemake@input[['coefs']])
+stats <- read_feather(snek@input[["stats"]])
+coefs <- read_feather(snek@input[["coefs"]])
 
 # "genes" or "gene sets"
 id_field <- colnames(stats)[1]
 
 # load feature-phenotype association metadata
-mdata <- read_feather(snakemake@input[['mdata']])
+mdata <- read_feather(snek@input[["mdata"]])
 
 # get a list of associations of the desired category
 surv_subset <- mdata %>%
-  filter(method == 'survival')
+  filter(method == "survival")
 
 # remove covariates that are not in the specified category
 cols_to_keep <- sprintf("%s_%s", surv_subset$dataset, surv_subset$phenotype)
@@ -40,11 +42,11 @@ coefs <- coefs[num_non_na > 1, ]
 
 # normalize contributions from each dataset, if enabled;
 # note: for some metap methods, weights can also be specified for each p-value..
-if (snakemake@config$normalize_dataset_contributions) {
+if (snek@config$normalize_dataset_contributions) {
   max_stat_list <- list(pull(stats, id_field))
   max_coef_list <- list(pull(coefs, id_field))
 
-  dataset_ids <- unique(str_split(colnames(stats)[-1], '_', simplify = TRUE)[, 1])
+  dataset_ids <- unique(str_split(colnames(stats)[-1], "_", simplify = TRUE)[, 1])
 
   for (id_ in dataset_ids) {
     # collapse columns for dataset into a single column
@@ -113,4 +115,4 @@ res <- data.frame(
 colnames(res)[1] <- id_field
 
 # store results
-write_feather(res, snakemake@output[[1]])
+write_feather(res, snek@output[[1]])

@@ -1,6 +1,6 @@
 #!/bin/env python
 """
-Package MM29 results
+Package MM30 scores
 """
 import os
 import yaml
@@ -12,7 +12,9 @@ import pandas as pd
 #from matplotlib import pyplot as plt
 from nodes import BioDataset
 
-df = pd.read_feather(snakemake.input[0])
+snek = snakemake
+
+df = pd.read_feather(snek.input[0])
 #df = df.set_index(df.columns[0])
 
 # load package metadata
@@ -21,11 +23,11 @@ df = pd.read_feather(snakemake.input[0])
 
 # package metadata
 metadata = {
-    "id": snakemake.params["id"],
-    "title": snakemake.params["title"],
-    "version": snakemake.config["version"],
+    "id": snek.params["id"],
+    "title": snek.params["title"],
+    "version": snek.config["version"],
     "profile": "bio-dataset",
-    "urls": ["https://github.com/khughitt/mm25"],
+    "urls": ["https://github.com/khughitt/mm30"],
     "row_type": "symbol",
     "datatype": "gene-weights",
     "diseases": ["D009101"],
@@ -40,7 +42,7 @@ metadata = {
 
 # include gene info from annotables as row metadata
 # todo: for pathways, include MSigDB gene set metadata;
-if snakemake.wildcards['feat_level'] == 'gene':
+if snek.wildcards['feat_level'] == 'gene':
     row_mdata = pd.read_csv("metadata/annotables-grch38.tsv.gz", sep='\t')
     row_mdata = row_mdata.set_index('symbol')
 
@@ -67,4 +69,4 @@ else:
 node = BioDataset(df, row_metadata=row_mdata, **metadata)
 
 # write out package & metadata
-node.to_pkg(os.path.dirname(snakemake.output[0]))
+node.to_pkg(os.path.dirname(snek.output[0]))

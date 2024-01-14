@@ -1,28 +1,43 @@
 #!/bin/env Rscript
 #
-# Creates subsetted versions of the full MM29 p-value / test statistic results which
-# include only covariates associated with a particular category (e.g. "survival")
+# Creates subsetted versions of the full MM30 p-value / test statistic results which
+# include only covariates associated with a particular category (e.g. "disease stage")
 #
 suppressMessages(library(arrow))
 suppressMessages(library(tidyverse))
 
+snek <- snakemake
+
 # load dataset gene- or pathway-level p-values calculcated by fassoc
-pvals <- read_feather(snakemake@input[['pvals']])
-stats <- read_feather(snakemake@input[['stats']])
-coefs <- read_feather(snakemake@input[['coefs']])
+pvals <- read_feather(snek@input[["pvals"]])
+stats <- read_feather(snek@input[["stats"]])
+coefs <- read_feather(snek@input[["coefs"]])
 
 # "genes" or "gene sets"
 id_field <- colnames(pvals)[1]
 
 # load feature-phenotype association metadata
-mdata <- read_feather(snakemake@input[['mdata']])
+mdata <- read_feather(snek@input[["mdata"]])
 
-# get a list of associations of the desired category
-pheno_subset <- mdata %>%
-  filter(category == snakemake@wildcards$category)
+# determine which subset of the data to include based on the requested data subset
+category <- snek@wildcards$category
+
+if (category == "disease_stage") {
+  pheno_subset <- mdata %>%
+    filter(category == snek@wildcards$category)
+} else if (category == "survival_os") {
+  mask <- grepl("overall", mdata$phenotype)
+  pheno_subset <- mdata[mask, ]
+} else if (category == "survival_pfs") {
+  mask <- grepl("prog_free|pfs|event", mdata$phenotype)
+  pheno_subset <- mdata[mask, ]
+} else if (category == "treatment_response") {
+  mask <- grepl("treatment_response|first_response", mdata$phenotype)
+  pheno_subset <- mdata[mask, ]
+}
 
 # remove covariates that are not in the specified category
-cols_to_keep <- sprintf("%s_%s", pheno_subset$dataset, pheno_subset$phenotype)
+cols_to_keep <- unique(sprintf("%s_%s", pheno_subset$dataset, pheno_subset$phenotype))
 cols_to_keep <- c(id_field, cols_to_keep)
 
 mask <- colnames(pvals) %in% cols_to_keep
@@ -41,6 +56,6 @@ stats <- stats[num_non_na > 1, ]
 coefs <- coefs[num_non_na > 1, ]
 
 # store results
-write_feather(pvals, snakemake@output[['pvals']])
-write_feather(stats, snakemake@output[['stats']])
-write_feather(coefs, snakemake@output[['coefs']])
+write_feather(pvals, snek@output[["pvals"]])
+write_feather(stats, snek@output[["stats"]])
+write_feather(coefs, snek@output[["coefs"]])

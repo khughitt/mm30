@@ -5,18 +5,17 @@
 suppressMessages(library(arrow))
 suppressMessages(library(tidyverse))
 
+snek <- snakemake
+
 # create a list of inidividual dataframes
 infiles <- c(
-  Sys.glob(snakemake@config$expr_data$geo),
-  snakemake@config$expr_data$mmrf
+  Sys.glob(snek@config$expr_data$geo),
+  snek@config$expr_data$mmrf
 )
 
 # load data and merge into a single dataframe
 dat <- lapply(infiles, read_feather) %>%
   purrr::reduce(full_join, by = "symbol")
-
-#dim(dat)
-# 102507   5749
 
 # drop any genes which contain a significant number of missing values
 num_nas <- apply(dat, 1, function(x) {
@@ -27,10 +26,5 @@ num_nas <- apply(dat, 1, function(x) {
 mask <- num_nas < .5 * ncol(dat)
 dat <- dat[mask, ]
 
-#table(mask)
-# mask
-# FALSE  TRUE
-# 81244 21263
-
 # store combined dataset
-write_feather(dat, snakemake@output[[1]])
+write_feather(dat, snek@output[[1]])

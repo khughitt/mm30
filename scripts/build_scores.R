@@ -14,10 +14,12 @@ suppressMessages(library(arrow))
 suppressMessages(library(metap))
 suppressMessages(library(tidyverse))
 
+snek <- snakemake
+
 # load dataset gene- or pathway-level p-values calculated by fassoc, along with the
 # experiment metadata
-pvals <- read_feather(snakemake@input[['pvals']])
-mdata <- read_feather(snakemake@input[['mdata']])
+pvals <- read_feather(snek@input[["pvals"]])
+mdata <- read_feather(snek@input[["mdata"]])
 
 id_field <- colnames(pvals)[1]
 
@@ -25,10 +27,10 @@ id_field <- colnames(pvals)[1]
 # if enabled, for each experiment for which multiple covariates analyzed, for each gene,
 # the minimum p-value observed across all p-values will be used, rather than providing
 # metap with multple p-values for a single gene/experiment.
-if (snakemake@config$normalize_dataset_contributions) {
+if (snek@config$normalize_dataset_contributions) {
   min_pval_list <- list(pull(pvals, id_field))
 
-  dataset_ids <- unique(str_split(colnames(pvals)[-1], '_', simplify = TRUE)[, 1])
+  dataset_ids <- unique(str_split(colnames(pvals)[-1], "_", simplify = TRUE)[, 1])
 
   for (id_ in dataset_ids) {
     # collapse columns for dataset into a single column
@@ -97,7 +99,7 @@ weights <- sqrt(mdata$num_samples[match(colnames(pval_mat), mdata$dataset)])
 
 sumz_wt_pvals <- c()
 
-for (i in 1:nrow(pvals)) {
+for (i in seq_len(nrow(pvals))) {
   row_pvals <- pval_mat[i, ]
 
   mask <- !is.na(row_pvals)
@@ -106,9 +108,9 @@ for (i in 1:nrow(pvals)) {
   filtered_weights <- weights[mask]
 
   # on rare occasions, sumz may fail for certain edge cases,
-  # a tryCatch block is used to allow snakemake to continue
+  # a tryCatch block is used to allow snek to continue
 
-  # if there are one or fewer pvals remaining, 
+  # if there are one or fewer pvals remaining,
   if (length(row_pvals) == 1) {
     sumz_wt_pvals <- c(sumz_wt_pvals, row_pvals)
   } else if (length(row_pvals) == 0) {
@@ -130,6 +132,15 @@ res <- data.frame(
   mean_pval    = apply(pval_mat, 1, mean, na.rm = TRUE),
   median_pval  = apply(pval_mat, 1, median, na.rm = TRUE),
   min_pval     = apply(pval_mat, 1, min, na.rm = TRUE),
+  num_sig_p05  = apply(pval_mat, 1, function(x) {
+    sum(x < 0.05, na.rm = TRUE)
+  }),
+  num_sig_p01  = apply(pval_mat, 1, function(x) {
+    sum(x < 0.01, na.rm = TRUE)
+  }),
+  num_sig_p001  = apply(pval_mat, 1, function(x) {
+    sum(x < 0.001, na.rm = TRUE)
+  }),
   sumlog_pval  = suppressWarnings(apply(pval_mat, 1, sumlog_wrapper)),
   sumz_pval    = suppressWarnings(apply(pval_mat, 1, sumz_wrapper)),
   sumz_wt_pval = sumz_wt_pvals,
@@ -138,7 +149,7 @@ res <- data.frame(
 )
 colnames(res)[1] <- id_field
 
-# drop any genes with missing values for the aggregated scores 
+# drop any genes with missing values for the aggregated scores
 res <- res[complete.cases(res), ]
 
 # reorder and store results
@@ -146,4 +157,4 @@ res <- res %>%
   arrange(sumz_wt_pval)
 
 # store results
-write_feather(res, snakemake@output[[1]])
+write_feather(res, snek@output[[1]])

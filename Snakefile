@@ -9,38 +9,28 @@ import os
 import re
 import pandas as pd
 
-configfile: "config/config-v6.0.yml"
+configfile: "config/config-v7.0.yml"
 
 # base input and output data dirs;
 # output comes from the separate feature association ("fassoc") pipeline
-out_dir = os.path.join(config["out_dir"], config["version"], "scores")
+out_dir = os.path.join(config["out_dir"], config["version"], "results")
 
-# load phenotype metadata
-phenotypes_infile = os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
-phenotypes = pd.read_feather(phenotypes_infile)
-
-# phenotype categories
-categories = phenotypes.category.unique()
-sample_types = ['patient', 'cell_line']
+# rankings to create for specific dataset/covariate categories
+categories = ["disease_stage", "survival_os", "survival_pfs", "treatment_response"]
 
 wildcard_constraints:
     category="|".join(categories),
-    sample_type="|".join(sample_types)
 
 rule all:
     input:
-        expand(os.path.join(out_dir, "results", "all", "mm30_{feat_level}_scores.feather"), 
+        expand(os.path.join(out_dir, "scores", "all", "mm30_{feat_level}_scores.feather"), 
                feat_level=["gene", "pathway"]),
-        expand(os.path.join(out_dir, "results", "categories", "mm30_{feat_level}_{category}_scores.feather"), 
+        expand(os.path.join(out_dir, "scores", "categories", "mm30_{feat_level}_{category}_scores.feather"),
                feat_level=["gene", "pathway"], category=categories),
-        expand(os.path.join(out_dir, "results", "sample_types", "mm30_{feat_level}_{sample_type}_scores.feather"), 
-               feat_level=["gene", "pathway"], sample_type=sample_types),
-        expand(os.path.join(out_dir, "results", "categories", "mm30_{feat_level}_survival_stats.feather"),
-                feat_level=["gene", "pathway"]),
-        expand(os.path.join(out_dir, "results", "combined", "mm30_{feat_level}_scores.feather"),
+        expand(os.path.join(out_dir, "scores", "categories", "mm30_{feat_level}_survival_stats.feather"),
                 feat_level=["gene", "pathway"]),
         os.path.join(out_dir, 'expr', 'mm30_combined_expr_data.feather'),
-        os.path.join(out_dir, "summary", "gene_score_cor_mat.feather"),
+        os.path.join(out_dir, "scores", "gene_score_cor_mat.feather"),
         os.path.join(out_dir, "metadata.feather")
 
 rule build_packages:
@@ -48,9 +38,9 @@ rule build_packages:
         expand(os.path.join(out_dir, "packages", "scores", "mm30_{feat_level}_scores", "datapackage.yml"),
                 feat_level=["gene", "pathway"])
 
-rule package_results:
+rule package_scores:
     input:
-        os.path.join(out_dir, "results", "all", "mm30_{feat_level}_scores.feather"), 
+        os.path.join(out_dir, "scores", "all", "mm30_{feat_level}_scores.feather"), 
     output:
         os.path.join(out_dir, "packages", "scores", "mm30_{feat_level}_scores", "datapackage.yml"),
         os.path.join(out_dir, "packages", "scores", "mm30_{feat_level}_scores", "data.csv"), 
@@ -60,27 +50,14 @@ rule package_results:
     script:
         "scripts/package_scores.py"
 
-rule combine_rankings:
-    input:
-        os.path.join(out_dir, "results", "all", "mm30_{feat_level}_scores.feather"),
-        os.path.join(out_dir, "results/categories/mm30_{feat_level}_disease_stage_scores.feather"), 
-        os.path.join(out_dir, "results/categories/mm30_{feat_level}_survival_scores.feather"), 
-        os.path.join(out_dir, "results/categories/mm30_{feat_level}_treatment_scores.feather")
-    output:
-        os.path.join(out_dir, "results", "combined", "mm30_{feat_level}_scores.feather")
-    script:
-        "scripts/combine_rankings.py"
-
 rule compute_mm30_ranking_correlations:
     input:
-        os.path.join(out_dir, "results", "all", "mm30_gene_scores.feather"), 
-        expand(os.path.join(out_dir, "results", "categories", "mm30_gene_{category}_scores.feather"), 
+        os.path.join(out_dir, "scores/all/mm30_gene_scores.feather"), 
+        expand(os.path.join(out_dir, "scores/categories/mm30_gene_{category}_scores.feather"), 
                category=categories)
     output:
-        os.path.join(out_dir, "summary", "gene_score_cor_mat.feather")
+        os.path.join(out_dir, "scores", "gene_score_cor_mat.feather")
     run:
-        # create a matrix of alternate gene scores created from different subsets
-        # of the MM30 datasets
         gene_scores = pd.read_feather(input[0])
         gene_scores = gene_scores.set_index('symbol')[['sumz_wt_pval']]
         gene_scores.columns = [os.path.basename(input[0])]
@@ -95,44 +72,36 @@ rule compute_mm30_ranking_correlations:
         gene_scores.corr().reset_index().rename(columns={"index": "file"}).to_feather(output[0])
 
 rule create_combined_expr:
-    output: os.path.join(out_dir, 'expr', 'mm30_combined_expr_data.feather')
+    output: 
+        os.path.join(out_dir, 'expr', 'mm30_combined_expr_data.feather')
     script:
         "scripts/combine_expr_data.R"
 
-rule mm30_surv_stats:
+rule build_survival_stats:
     input: 
         stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
         coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        os.path.join(out_dir, "results", "categories", "mm30_{feat_level}_survival_stats.feather")
+        os.path.join(out_dir, "scores", "categories", "mm30_{feat_level}_survival_stats.feather")
     script:
         "scripts/build_survival_stats.R"
 
-rule build_mm30_all_scores:
+rule build_scores:
     input: 
         pvals=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        os.path.join(out_dir, "results", "all", "mm30_{feat_level}_scores.feather")
+        os.path.join(out_dir, "scores", "all", "mm30_{feat_level}_scores.feather")
     script:
         "scripts/build_scores.R"
 
-rule mm30_categories:
+rule build_category_specific_scores:
     input: 
-        pvals=os.path.join(out_dir, "subsets", "categories", "mm30_{feat_level}_{category}_pvals.feather"),
+        pvals=os.path.join(out_dir, "subsets", "mm30_{feat_level}_{category}_pvals.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        os.path.join(out_dir, "results", "categories", "mm30_{feat_level}_{category}_scores.feather")
-    script:
-        "scripts/build_scores.R"
-
-rule mm30_sample_types:
-    input: 
-        pvals=os.path.join(out_dir, "subsets", "sample_types", "mm30_{feat_level}_{sample_type}_pvals.feather"),
-        mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
-    output:
-        os.path.join(out_dir, "results", "sample_types", "mm30_{feat_level}_{sample_type}_scores.feather")
+        os.path.join(out_dir, "scores", "categories", "mm30_{feat_level}_{category}_scores.feather")
     script:
         "scripts/build_scores.R"
 
@@ -143,24 +112,11 @@ rule create_mm30_category_subsets:
         coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        pvals=os.path.join(out_dir, "subsets", "categories", "mm30_{feat_level}_{category}_pvals.feather"),
-        stats=os.path.join(out_dir, "subsets", "categories", "mm30_{feat_level}_{category}_stats.feather"),
-        coefs=os.path.join(out_dir, "subsets", "categories", "mm30_{feat_level}_{category}_coefs.feather")
+        pvals=os.path.join(out_dir, "subsets", "mm30_{feat_level}_{category}_pvals.feather"),
+        stats=os.path.join(out_dir, "subsets", "mm30_{feat_level}_{category}_stats.feather"),
+        coefs=os.path.join(out_dir, "subsets", "mm30_{feat_level}_{category}_coefs.feather")
     script:
         "scripts/create_category_subsets.R"
-
-rule create_sample_type_subsets:
-    input:
-        pvals=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather"),
-        stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
-        coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
-        mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
-    output:
-        pvals=os.path.join(out_dir, "subsets", "sample_types", "mm30_{feat_level}_{sample_type}_pvals.feather"),
-        stats=os.path.join(out_dir, "subsets", "sample_types", "mm30_{feat_level}_{sample_type}_stats.feather"),
-        coefs=os.path.join(out_dir, "subsets", "sample_types", "mm30_{feat_level}_{sample_type}_coefs.feather")
-    script:
-        "scripts/create_sample_type_subsets.R"
 
 rule create_combined_sample_metadata:
     output:
