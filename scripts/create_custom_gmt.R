@@ -1,6 +1,6 @@
 #!/bin/env Rscript
 #
-# Creates a custom filtered gmt file containing the top N highest ranking MM29
+# Creates a custom filtered gmt file containing the top N highest ranking MM30
 # pathways/gene sets.
 #
 suppressMessages(library(GSEABase))

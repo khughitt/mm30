@@ -1,6 +1,6 @@
 #!/bin/env python
 #
-# Clusters MM29 covariates
+# Clusters MM30 covariates
 # V. Keith Hughitt
 #
 import sys

@@ -1,6 +1,6 @@
 #!/bin/env Rscript
 #
-# Combines expression data from individual experiments making up MM29
+# Combines expression data from individual experiments making up MM30
 #
 suppressMessages(library(arrow))
 suppressMessages(library(tidyverse))

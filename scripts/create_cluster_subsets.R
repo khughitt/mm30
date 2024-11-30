@@ -1,6 +1,6 @@
 #!/bin/env Rscript
 #
-# Creates subsetted versions of the full MM29 p-value / test statistic results which
+# Creates subsetted versions of the full MM30 p-value / test effect size results which
 # include only covariates associated with a particular cluster
 #
 suppressMessages(library(arrow))
@@ -8,8 +8,8 @@ suppressMessages(library(tidyverse))
 
 # load dataset gene- or pathway-level p-values calculcated by fassoc
 pvals <- read_feather(snakemake@input[['pvals']])
-stats <- read_feather(snakemake@input[['stats']])
-coefs <- read_feather(snakemake@input[['coefs']])
+effects <- read_feather(snakemake@input[['effects']])
+errors <- read_feather(snakemake@input[['errors']])
 
 # "genes" or "gene sets"
 id_field <- colnames(pvals)[1]
@@ -25,8 +25,8 @@ covariates <- clusters %>%
 mask <- colnames(pvals) %in% c(id_field, covariates)
 
 pvals <- pvals[, mask]
-stats <- stats[, mask]
-coefs <- coefs[, mask]
+effects <- effects[, mask]
+errors <- errors[, mask]
 
 # drop any features that no longer have any non-missing values after filtering
 num_non_na <- apply(pvals, 1, function(x) {
@@ -34,10 +34,10 @@ num_non_na <- apply(pvals, 1, function(x) {
 })
 
 pvals <- pvals[num_non_na > 1, ]
-stats <- stats[num_non_na > 1, ]
-coefs <- coefs[num_non_na > 1, ]
+effects <- effects[num_non_na > 1, ]
+errors <- errors[num_non_na > 1, ]
 
 # store results
 write_feather(pvals, snakemake@output[['pvals']])
-write_feather(stats, snakemake@output[['stats']])
-write_feather(coefs, snakemake@output[['coefs']])
+write_feather(effects, snakemake@output[['effects']])
+write_feather(errors, snakemake@output[['errors']])

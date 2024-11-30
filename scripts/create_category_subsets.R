@@ -1,7 +1,7 @@
 #!/bin/env Rscript
 #
-# Creates subsetted versions of the full MM30 p-value / test statistic results which
-# include only covariates associated with a particular category (e.g. "disease stage")
+# Creates subsetted versions of the full MM30 p-value, effect size, and standard error tables
+# containing only covariates associated with a particular category (e.g. "disease stage")
 #
 suppressMessages(library(arrow))
 suppressMessages(library(tidyverse))
@@ -10,8 +10,11 @@ snek <- snakemake
 
 # load dataset gene- or pathway-level p-values calculcated by fassoc
 pvals <- read_feather(snek@input[["pvals"]])
-stats <- read_feather(snek@input[["stats"]])
-coefs <- read_feather(snek@input[["coefs"]])
+effects <- read_feather(snek@input[["effects"]])
+errors <- read_feather(snek@input[["errors"]])
+
+message("okay..")
+save.image()
 
 # "genes" or "gene sets"
 id_field <- colnames(pvals)[1]
@@ -43,8 +46,8 @@ cols_to_keep <- c(id_field, cols_to_keep)
 mask <- colnames(pvals) %in% cols_to_keep
 
 pvals <- pvals[, mask]
-stats <- stats[, mask]
-coefs <- coefs[, mask]
+effects <- effects[, mask]
+errors <- errors[, mask]
 
 # drop any features that no longer have any non-missing values after filtering
 num_non_na <- apply(pvals, 1, function(x) {
@@ -52,10 +55,10 @@ num_non_na <- apply(pvals, 1, function(x) {
 })
 
 pvals <- pvals[num_non_na > 1, ]
-stats <- stats[num_non_na > 1, ]
-coefs <- coefs[num_non_na > 1, ]
+effects <- effects[num_non_na > 1, ]
+errors <- errors[num_non_na > 1, ]
 
 # store results
 write_feather(pvals, snek@output[["pvals"]])
-write_feather(stats, snek@output[["stats"]])
-write_feather(coefs, snek@output[["coefs"]])
+write_feather(effects, snek@output[["effects"]])
+write_feather(errors, snek@output[["errors"]])
