@@ -19,7 +19,7 @@ mdata <- read_feather(snek@input[["mdata"]])
 
 # get a list of associations of the desired category
 surv_subset <- mdata %>%
-  filter(method == "survival")
+  filter(category == "survival")
 
 # remove covariates that are not in the specified category
 cols_to_keep <- sprintf("%s_%s", surv_subset$dataset, surv_subset$phenotype)

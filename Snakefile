@@ -34,6 +34,7 @@ rule all:
                 feat_level=["gene", "pathway"]),
         os.path.join(out_dir, 'expr', 'mm30_combined_expr_data.feather'),
         os.path.join(out_dir, 'genes', 'summary.feather'),
+        os.path.join(out_dir, 'genes', 'survival.feather'),
         os.path.join(out_dir, "scores", "gene_score_cor_mat.feather"),
         os.path.join(out_dir, "metadata.feather")
 
@@ -75,17 +76,33 @@ rule compute_mm30_ranking_correlations:
 
         gene_scores.corr().reset_index().rename(columns={"index": "file"}).to_feather(output[0])
 
-rule summarize_gene_stats:
+rule create_gene_survival_table:
+  input:
+    os.path.join(config['fassoc_dir'], "merged", "gene_association_effects.feather"),
+    os.path.join(config['fassoc_dir'], "merged", "gene_association_errors.feather"),
+    os.path.join(config['fassoc_dir'], "merged", "gene_association_pvals.feather"),
+    os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
+  output:
+    os.path.join(out_dir, 'genes', 'survival.feather')
+  script:
+    "scripts/create_gene_survival_table.R"
+
+rule create_gene_summary_table:
   input:
       os.path.join(out_dir, 'genes', 'mean.feather'),
       os.path.join(out_dir, 'genes', 'median.feather'),
       os.path.join(out_dir, 'genes', 'var.feather'),
       os.path.join(out_dir, 'genes', 'cv.feather'),
       os.path.join(out_dir, 'genes', 'ratio_nonzero.feather'),
+      os.path.join(out_dir, 'scores', 'all', 'mm30_gene_scores.feather'),
+      os.path.join(out_dir, 'scores', 'categories', 'mm30_gene_disease_stage_scores.feather'),
+      os.path.join(out_dir, 'scores', 'categories', 'mm30_gene_survival_os_scores.feather'),
+      os.path.join(out_dir, 'scores', 'categories', 'mm30_gene_survival_pfs_scores.feather'),
+      os.path.join(out_dir, 'scores', 'categories', 'mm30_gene_treatment_response_scores.feather')
   output:
       os.path.join(out_dir, 'genes', 'summary.feather')
   script:
-    "scripts/summarize_gene_stats.R"
+    "scripts/create_gene_summary_table.R"
 
 rule compute_gene_stats:
     output: 
