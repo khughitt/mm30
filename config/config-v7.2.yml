@@ -1,0 +1,23 @@
+#
+# MM30 Configuration
+#
+out_dir: "/data/proj/mm30"
+version: "7.2"
+
+fassoc_dir: "/data/proj/mm30/7.2/fassoc"
+
+# location of processed gene expression data; used to construct a combined expr
+# data matrix for convenience
+expr_data:
+  geo: "/data/proj/mm30/7.2/geo/final/*/data.feather"
+  mmrf: "/data/proj/mm30/7.2/mmrf/IA22/rnaseq/636c07bf052f470001ac0592_Expression Estimates - Gene Based_MMRF_CoMMpass_IA22_salmon_geneUnstrandedIgFiltered_tpm.feather"
+
+sample_metadata:
+  geo: "/data/proj/mm30/7.2/geo/final/*/column-metadata.feather"
+  mmrf: "/data/proj/mm30/7.2/mmrf/IA22/clinical_flat_files/MMRF_CoMMpass_IA22_combined_metadata.feather"
+
+# If true, each dataset will contribute the same amount to the final combined
+# p-values / scores. 
+# In cases where multiple covariates are assessed for a dataset, the minimum p-value
+# will be used for each gene/gene set.
+normalize_dataset_contributions: true

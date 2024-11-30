@@ -9,7 +9,10 @@ import os
 import re
 import pandas as pd
 
-configfile: "config/config-v7.0.yml"
+# MAR 6, 2024: Holding off running "7.1" until I have had time to devise an appropriate strategy for
+# scoring/ranking genes which incorporates effect size / number of significant datasets..
+# probably will need to be separate for each subset?
+configfile: "config/config-v7.2.yml"
 
 # base input and output data dirs;
 # output comes from the separate feature association ("fassoc") pipeline
@@ -27,9 +30,10 @@ rule all:
                feat_level=["gene", "pathway"]),
         expand(os.path.join(out_dir, "scores", "categories", "mm30_{feat_level}_{category}_scores.feather"),
                feat_level=["gene", "pathway"], category=categories),
-        expand(os.path.join(out_dir, "scores", "categories", "mm30_{feat_level}_survival_stats.feather"),
+        expand(os.path.join(out_dir, "scores", "categories", "mm30_{feat_level}_survival_effects.feather"),
                 feat_level=["gene", "pathway"]),
         os.path.join(out_dir, 'expr', 'mm30_combined_expr_data.feather'),
+        os.path.join(out_dir, 'genes', 'summary.feather'),
         os.path.join(out_dir, "scores", "gene_score_cor_mat.feather"),
         os.path.join(out_dir, "metadata.feather")
 
@@ -71,19 +75,41 @@ rule compute_mm30_ranking_correlations:
 
         gene_scores.corr().reset_index().rename(columns={"index": "file"}).to_feather(output[0])
 
+rule summarize_gene_stats:
+  input:
+      os.path.join(out_dir, 'genes', 'mean.feather'),
+      os.path.join(out_dir, 'genes', 'median.feather'),
+      os.path.join(out_dir, 'genes', 'var.feather'),
+      os.path.join(out_dir, 'genes', 'cv.feather'),
+      os.path.join(out_dir, 'genes', 'ratio_nonzero.feather'),
+  output:
+      os.path.join(out_dir, 'genes', 'summary.feather')
+  script:
+    "scripts/summarize_gene_stats.R"
+
+rule compute_gene_stats:
+    output: 
+        os.path.join(out_dir, 'genes', 'mean.feather'),
+        os.path.join(out_dir, 'genes', 'median.feather'),
+        os.path.join(out_dir, 'genes', 'var.feather'),
+        os.path.join(out_dir, 'genes', 'cv.feather'),
+        os.path.join(out_dir, 'genes', 'ratio_nonzero.feather'),
+    script:
+        "scripts/compute_gene_stats.R"
+
 rule create_combined_expr:
     output: 
         os.path.join(out_dir, 'expr', 'mm30_combined_expr_data.feather')
     script:
-        "scripts/combine_expr_data.R"
+        "scripts/create_combined_expr.R"
 
 rule build_survival_stats:
     input: 
-        stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
-        coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
+        effects=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_effects.feather"),
+        errors=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_errors.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
-        os.path.join(out_dir, "scores", "categories", "mm30_{feat_level}_survival_stats.feather")
+        os.path.join(out_dir, "scores", "categories", "mm30_{feat_level}_survival_effects.feather")
     script:
         "scripts/build_survival_stats.R"
 
@@ -108,13 +134,13 @@ rule build_category_specific_scores:
 rule create_mm30_category_subsets:
     input:
         pvals=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_pvals.feather"),
-        stats=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_stats.feather"),
-        coefs=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_coefs.feather"),
+        effects=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_effects.feather"),
+        errors=os.path.join(config['fassoc_dir'], "merged", "{feat_level}_association_errors.feather"),
         mdata=os.path.join(config['fassoc_dir'], "metadata", "association_metadata.feather")
     output:
         pvals=os.path.join(out_dir, "subsets", "mm30_{feat_level}_{category}_pvals.feather"),
-        stats=os.path.join(out_dir, "subsets", "mm30_{feat_level}_{category}_stats.feather"),
-        coefs=os.path.join(out_dir, "subsets", "mm30_{feat_level}_{category}_coefs.feather")
+        effects=os.path.join(out_dir, "subsets", "mm30_{feat_level}_{category}_effects.feather"),
+        errors=os.path.join(out_dir, "subsets", "mm30_{feat_level}_{category}_errors.feather")
     script:
         "scripts/create_category_subsets.R"
 
@@ -171,3 +197,5 @@ rule create_combined_sample_metadata:
 
         # write combined metadata to disk
         mdat.reset_index(drop=True).to_feather(output[0])
+
+# vi:ft=snakemake
