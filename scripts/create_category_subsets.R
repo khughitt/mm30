@@ -13,9 +13,6 @@ pvals <- read_feather(snek@input[["pvals"]])
 effects <- read_feather(snek@input[["effects"]])
 errors <- read_feather(snek@input[["errors"]])
 
-message("okay..")
-save.image()
-
 # "genes" or "gene sets"
 id_field <- colnames(pvals)[1]
 
@@ -27,7 +24,7 @@ category <- snek@wildcards$category
 
 if (category == "disease_stage") {
   pheno_subset <- mdata %>%
-    filter(category == snek@wildcards$category)
+    filter(category == "disease_stage")
 } else if (category == "survival_os") {
   mask <- grepl("overall", mdata$phenotype)
   pheno_subset <- mdata[mask, ]

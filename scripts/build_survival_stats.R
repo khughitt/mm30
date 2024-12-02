@@ -65,7 +65,7 @@ if (snek@config$normalize_dataset_contributions) {
     max_effects[is.infinite(max_effects)] <- NA
     max_effect_list <- c(max_effect_list, list(c(max_effects)))
 
-    # get maximum errorficients for each dataset
+    # get maximum std errors for each dataset
     max_errors <- suppressWarnings(apply(errors[, mask, drop = FALSE], 1, function (x) {
       x[which.max(abs(x))]
     }))
@@ -87,7 +87,7 @@ if (snek@config$normalize_dataset_contributions) {
   errors <- as_tibble(max_error_list)
 }
 
-# create matrix versions of the p-values without the id column
+# create matrix versions of the effect/error matrices without the id column
 effect_mat <- effects %>%
   select(-all_of(id_field)) %>%
   as.matrix()
