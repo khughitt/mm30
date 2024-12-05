@@ -7,6 +7,14 @@ suppressMessages(library(tidyverse))
 
 snek <- snakemake
 
+# exclude genes below a specified threshold of significance;
+# current approach: keep all genes with >= 2 P-values < 0.01.
+gene_scores <- read_feather(snek@input[[1]])
+
+to_keep <- gene_scores %>%
+  filter(num_sig_p01 > 1) %>%
+  pull(symbol)
+
 # create a list of inidividual dataframes
 infiles <- c(
   Sys.glob(snek@config$expr_data$geo),
@@ -17,14 +25,17 @@ infiles <- c(
 dat <- lapply(infiles, read_feather) %>%
   purrr::reduce(full_join, by = "symbol")
 
-# drop any genes which contain a significant number of missing values
-num_nas <- apply(dat, 1, function(x) {
-  sum(is.na(x))
-})
+# create a size factor "scaled" version prior to filtering
+dat_scaled <- dat
+dat_scaled[, -1] <- sweep(dat_scaled[, -1], 2, colSums(dat_scaled[, -1], na.rm=TRUE), "/") * 1E6
 
-# for now, we will only keep genes with < 50% missing values
-mask <- num_nas < .5 * ncol(dat)
-dat <- dat[mask, ]
+# exclude low significance genes
+dat <- dat %>%
+  filter(symbol %in% to_keep)
 
-# store combined dataset
+dat_scaled <- dat_scaled %>%
+  filter(symbol %in% to_keep)
+
+# store combined datasets
 write_feather(dat, snek@output[[1]])
+write_feather(dat_scaled, snek@output[[2]])

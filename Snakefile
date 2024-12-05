@@ -110,8 +110,11 @@ rule compute_gene_stats:
         "scripts/compute_gene_stats.R"
 
 rule create_combined_expr:
+    input:
+        os.path.join(out_dir, "scores", "all", "mm30_gene_scores.feather")
     output: 
-        os.path.join(out_dir, 'expr', 'mm30_combined_expr_data.feather')
+        os.path.join(out_dir, 'expr', 'mm30_combined_expr_data.feather'),
+        os.path.join(out_dir, 'expr', 'mm30_combined_expr_data_scaled.feather')
     script:
         "scripts/create_combined_expr.R"
 
