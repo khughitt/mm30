@@ -4,6 +4,8 @@
 out_dir: "/data/proj/mm30"
 version: "7.2"
 
+# directories relating to earlier steps
+geo_dir: "/data/proj/mm30/7.2/geo"
 fassoc_dir: "/data/proj/mm30/7.2/fassoc"
 
 # location of processed gene expression data; used to construct a combined expr
