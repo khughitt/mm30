@@ -5,8 +5,10 @@ import re
 import glob
 import pandas as pd
 
-geo_mdata = glob.glob(config['sample_metadata']['geo'])
-mmrf_mdata = config['sample_metadata']['mmrf'] 
+snek = snakemake
+
+geo_mdata = glob.glob(snek.config['sample_metadata']['geo'])
+mmrf_mdata = snek.config['sample_metadata']['mmrf'] 
 
 # combine geo/mmrf metadata into a single dataframe with columns for sample id,
 # experiment, platform, and platform_type
@@ -53,4 +55,4 @@ for infile in geo_mdata:
     mdat = pd.concat([mdat, geo_mdat])
 
 # write combined metadata to disk
-mdat.reset_index(drop=True).to_feather(snakemake.output[0])
+mdat.reset_index(drop=True).to_feather(snek.output[0])

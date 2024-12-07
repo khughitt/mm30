@@ -25,8 +25,6 @@ rule all:
     input:
         expand(os.path.join(out_dir, "scores", "all", "{feat_level}.feather"), 
                feat_level=feat_levels),
-        # expand(os.path.join(out_dir, "scores", "categories", "mm30_{feat_level}_{category}_scores.feather"),
-        #        feat_level=["gene", "pathway"], category=categories),
         expand(os.path.join(out_dir, "scores", "{category}", "{feat_level}.feather"),
                feat_level=feat_levels, category=categories),
         os.path.join(out_dir, "expr", "gene", "expr.feather"),
@@ -61,16 +59,17 @@ rule compute_mm30_ranking_correlations:
     run:
         gene_scores = pd.read_feather(input[0])
         gene_scores = gene_scores.set_index("symbol")[["sumz_wt_pval"]]
-        gene_scores.columns = [os.path.basename(input[0])]
+        gene_scores.columns = ["all"]
 
         for infile in input[1:]:
             dat = pd.read_feather(infile)
             dat = dat.set_index("symbol")[["sumz_wt_pval"]]
-            dat.columns = [os.path.basename(infile)]
+            category = os.path.basename(os.path.dirname(infile))
+            dat.columns = [category]
 
             gene_scores = gene_scores.join(dat, on="symbol")
 
-        gene_scores.corr().reset_index().rename(columns={"index": "file"}).to_feather(output[0])
+        gene_scores.corr().reset_index().rename(columns={"index": "category"}).to_feather(output[0])
 
 rule create_gene_survival_table:
   input:
@@ -139,7 +138,7 @@ rule build_category_specific_scores:
     script:
         "scripts/build_category_specific_scores.R"
 
-rule create_mm30_category_associations:
+rule create_category_specific_associations:
     input:
         pvals  =os.path.join(config["fassoc_dir"], "merged", "{feat_level}_association_pvals.feather"),
         effects=os.path.join(config["fassoc_dir"], "merged", "{feat_level}_association_effects.feather"),
@@ -150,7 +149,7 @@ rule create_mm30_category_associations:
         effects=os.path.join(out_dir, "associations", "{category}", "{feat_level}", "effects.feather"),
         errors =os.path.join(out_dir, "associations", "{category}", "{feat_level}", "errors.feather")
     script:
-        "scripts/create_category_associations.R"
+        "scripts/create_category_specific_associations.R"
 
 rule create_combined_covariates_yaml:
     output:
