@@ -7,8 +7,8 @@ snek <- snakemake
 
 covariates <- list()
 
-for (fname in list.files(snek@config$fassoc_dir)) {
-  cfg <- read_yaml(file.path(snek@config$fassoc_dir, fname))
+for (fname in list.files(snek@config$fassoc_yaml_dir)) {
+  cfg <- read_yaml(file.path(snek@config$fassoc_yaml_dir, fname))
   covariates[[cfg$name]] <- cfg$phenotypes$associations
 }
 

@@ -23,15 +23,19 @@ wildcard_constraints:
 
 rule all:
     input:
-        expand(os.path.join(out_dir, "scores", "all", "{feat_level}.feather"), 
+        expand(os.path.join(out_dir, "scores", "metap", "all", "{feat_level}.feather"), 
                feat_level=feat_levels),
-        expand(os.path.join(out_dir, "scores", "{category}", "{feat_level}.feather"),
+        expand(os.path.join(out_dir, "scores", "metap", "{category}", "{feat_level}.feather"),
+               feat_level=feat_levels, category=categories),
+        expand(os.path.join(out_dir, "scores", "metafor", "{category}", "{feat_level}.feather"),
                feat_level=feat_levels, category=categories),
         os.path.join(out_dir, "expr", "gene", "expr.feather"),
         os.path.join(out_dir, "summary", "gene.feather"),
         os.path.join(out_dir, "gene", "survival.feather"),
         os.path.join(out_dir, "scores", "gene_score_cor_mat.feather"),
-        os.path.join(out_dir, "metadata", "samples.feather")
+        os.path.join(out_dir, "metadata", "samples.feather"),
+        os.path.join(out_dir, "metadata", "datasets.feather"),
+        os.path.join(out_dir, "metadata", "covariates.yml")
 
 rule build_packages:
     input: 
@@ -40,7 +44,7 @@ rule build_packages:
 
 rule package_scores:
     input:
-        os.path.join(out_dir, "scores", "all", "{feat_level}.feather"), 
+        os.path.join(out_dir, "scores", "metap", "all", "{feat_level}.feather"), 
     output:
         os.path.join(out_dir, "packages", "{feat_level}", "datapackage.yml"),
         os.path.join(out_dir, "packages", "{feat_level}", "data.csv"), 
@@ -52,8 +56,8 @@ rule package_scores:
 
 rule compute_mm30_ranking_correlations:
     input:
-        os.path.join(out_dir, "scores", "all", "gene.feather"), 
-        expand(os.path.join(out_dir, "scores", "{category}", "gene.feather"), category=categories)
+        os.path.join(out_dir, "scores", "metap", "all", "gene.feather"), 
+        expand(os.path.join(out_dir, "scores", "metap", "{category}", "gene.feather"), category=categories)
     output:
         os.path.join(out_dir, "scores", "gene_score_cor_mat.feather")
     run:
@@ -89,11 +93,11 @@ rule create_gene_summary_table:
       os.path.join(out_dir, "expr", "gene", "stats", "var.feather"),
       os.path.join(out_dir, "expr", "gene", "stats", "cv.feather"),
       os.path.join(out_dir, "expr", "gene", "stats", "ratio_nonzero.feather"),
-      os.path.join(out_dir, "scores", "all", "gene.feather"),
-      os.path.join(out_dir, "scores", "disease_stage", "gene.feather"),
-      os.path.join(out_dir, "scores", "survival_os", "gene.feather"),
-      os.path.join(out_dir, "scores", "survival_pfs", "gene.feather"),
-      os.path.join(out_dir, "scores", "treatment_response", "gene.feather")
+      os.path.join(out_dir, "scores", "metap", "all", "gene.feather"),
+      os.path.join(out_dir, "scores", "metap", "disease_stage", "gene.feather"),
+      os.path.join(out_dir, "scores", "metap", "survival_os", "gene.feather"),
+      os.path.join(out_dir, "scores", "metap", "survival_pfs", "gene.feather"),
+      os.path.join(out_dir, "scores", "metap", "treatment_response", "gene.feather")
   output:
       os.path.join(out_dir, "summary", "gene.feather")
   script:
@@ -111,32 +115,40 @@ rule compute_gene_stats:
 
 rule create_combined_expr:
     input:
-        os.path.join(out_dir, "scores", "all", "gene.feather")
+        os.path.join(out_dir, "scores", "metap", "all", "gene.feather")
     output: 
         os.path.join(out_dir, "expr", "gene", "expr.feather"),
         os.path.join(out_dir, "expr", "gene", "expr_scaled.feather")
     script:
         "scripts/create_combined_expr.R"
 
-rule build_scores:
+rule compute_metap_scores:
     input: 
         pvals=os.path.join(config["fassoc_dir"], "merged", "{feat_level}_association_pvals.feather"),
         mdata=os.path.join(config["fassoc_dir"], "metadata", "association_metadata.feather")
     output:
-        os.path.join(out_dir, "scores", "all", "{feat_level}.feather")
+        os.path.join(out_dir, "scores", "metap", "all", "{feat_level}.feather")
     script:
-        "scripts/build_scores.R"
+        "scripts/compute_metap_scores.R"
 
-rule build_category_specific_scores:
+rule compute_category_specific_metap_scores:
     input: 
-        pvals  =os.path.join(out_dir, "associations", "{category}", "{feat_level}", "pvals.feather"),
+        pvals=os.path.join(out_dir, "associations", "{category}", "{feat_level}", "pvals.feather"),
+        mdata=os.path.join(config["fassoc_dir"], "metadata", "association_metadata.feather")
+    output:
+        os.path.join(out_dir, "scores", "metap", "{category}", "{feat_level}.feather")
+    script:
+        "scripts/compute_metap_scores.R"
+
+rule compute_category_specific_metafor_scores:
+    input: 
         effects=os.path.join(out_dir, "associations", "{category}", "{feat_level}", "effects.feather"),
         errors =os.path.join(out_dir, "associations", "{category}", "{feat_level}", "errors.feather"),
         mdata  =os.path.join(config["fassoc_dir"], "metadata", "association_metadata.feather")
     output:
-        os.path.join(out_dir, "scores", "{category}", "{feat_level}.feather")
+        os.path.join(out_dir, "scores", "metafor", "{category}", "{feat_level}.feather")
     script:
-        "scripts/build_category_specific_scores.R"
+        "scripts/compute_metafor_scores.R"
 
 rule create_category_specific_associations:
     input:

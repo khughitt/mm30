@@ -1,6 +1,6 @@
 #!/bin/env Rscript
 #
-# Combines feature associations from multiple sources
+# compute_metap_scores.R
 #
 # Note: for some useful notes and diagrams on choosing a method to combine p-values,
 # refer to figures 4-5 in the [metap compare
