@@ -29,8 +29,8 @@ rule all:
                feat_level=feat_levels, category=categories),
         expand(os.path.join(out_dir, "scores", "metafor", "{category}", "{feat_level}.feather"),
                feat_level=feat_levels, category=categories),
-        expand(os.path.join(out_dir, "scores", "combined", "{category}", "gene.feather"),
-               category=categories),
+        expand(os.path.join(out_dir, "scores", "combined", "{category}", "{feat_level}.feather"),
+               feat_level=feat_levels, category=categories),
         os.path.join(out_dir, "expr", "gene", "expr.feather"),
         # os.path.join(out_dir, "summary", "gene.feather"),
         os.path.join(out_dir, "expr", "gene", "coex.feather"),
@@ -41,6 +41,7 @@ rule all:
         os.path.join(out_dir, "metadata", "covariates.feather"),
         os.path.join(out_dir, "metadata", "datasets.feather"),
         os.path.join(out_dir, "metadata", "genes.feather"),
+        os.path.join(out_dir, "metadata", "pathways.feather"),
         os.path.join(out_dir, "metadata", "samples.feather")
 
 rule build_packages:
@@ -92,14 +93,14 @@ rule create_gene_survival_table:
   script:
     "scripts/create_gene_survival_table.R"
 
-rule create_combined_gene_scores_tables:
+rule create_combined_score_tables:
   input:
-      os.path.join(out_dir, "scores", "metap", "{category}", "gene.feather"),
-      os.path.join(out_dir, "scores", "metafor", "{category}", "gene.feather")
+      os.path.join(out_dir, "scores", "metap", "{category}", "{feat_level}.feather"),
+      os.path.join(out_dir, "scores", "metafor", "{category}", "{feat_level}.feather")
   output:
-      os.path.join(out_dir, "scores", "combined", "{category}", "gene.feather")
+      os.path.join(out_dir, "scores", "combined", "{category}", "{feat_level}.feather")
   script:
-      "scripts/create_combined_gene_scores_tables.R"
+      "scripts/create_combined_score_tables.R"
 
 # rule create_gene_summary_table:
 #   input:
@@ -220,7 +221,7 @@ rule create_pathway_metadata_table:
   output:
     os.path.join(out_dir, "metadata", "pathways.feather")
   script:
-    "scripts/create_pathway_metadata_table.R"
+    "scripts/create_pathway_metadata_table.py"
 
 rule create_dataset_metadata_table:
     output:

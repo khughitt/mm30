@@ -9,6 +9,10 @@ geo_dir: "/data/proj/mm30/7.3/geo"
 fassoc_dir: "/data/proj/mm30/7.3/fassoc"
 fassoc_yaml_dir: "../fassoc/datasets/mm30/7.3"
 
+# gene sets
+msigdb_gmt: "/data/raw/gene-sets/msigdb/2024.1/hs/mm30.gmt"
+msigdb_json: "/data/raw/gene-sets/msigdb/2024.1/hs/msigdb.v2024.1.Hs.json"
+
 # location of processed gene expression data; used to construct a combined expr
 # data matrix for convenience
 expr_data:

@@ -1,5 +1,5 @@
 #
-# create_combined_gene_scores_tables.R
+# create_combined_score_tables.R
 #
 library(arrow)
 library(tidyverse)
@@ -15,5 +15,5 @@ metafor <- read_feather(snek@input[[2]]) %>%
 
 metap %>%
   left_join(metafor) %>%
-  select(symbol, ends_with("pval"), starts_with("num_sig"), everything()) %>%
+  select(1, ends_with("pval"), starts_with("num_sig"), everything()) %>%
   write_feather(snek@output[[1]])
