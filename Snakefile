@@ -7,7 +7,7 @@ MM30 gene and pathway weights.
 import os
 import pandas as pd
 
-configfile: "config/config-v7.2.yml"
+configfile: "config/config-v7.3.yml"
 
 # base input and output data dirs;
 # output comes from the separate feature association ("fassoc") pipeline
@@ -29,13 +29,19 @@ rule all:
                feat_level=feat_levels, category=categories),
         expand(os.path.join(out_dir, "scores", "metafor", "{category}", "{feat_level}.feather"),
                feat_level=feat_levels, category=categories),
+        expand(os.path.join(out_dir, "scores", "combined", "{category}", "gene.feather"),
+               category=categories),
         os.path.join(out_dir, "expr", "gene", "expr.feather"),
-        os.path.join(out_dir, "summary", "gene.feather"),
+        # os.path.join(out_dir, "summary", "gene.feather"),
+        os.path.join(out_dir, "expr", "gene", "coex.feather"),
+        os.path.join(out_dir, "expr", "gene", "coex_scaled.feather"),
         os.path.join(out_dir, "gene", "survival.feather"),
         os.path.join(out_dir, "scores", "gene_score_cor_mat.feather"),
-        os.path.join(out_dir, "metadata", "samples.feather"),
+        os.path.join(out_dir, "metadata", "covariates.yml"),
+        os.path.join(out_dir, "metadata", "covariates.feather"),
         os.path.join(out_dir, "metadata", "datasets.feather"),
-        os.path.join(out_dir, "metadata", "covariates.yml")
+        os.path.join(out_dir, "metadata", "genes.feather"),
+        os.path.join(out_dir, "metadata", "samples.feather")
 
 rule build_packages:
     input: 
@@ -86,22 +92,31 @@ rule create_gene_survival_table:
   script:
     "scripts/create_gene_survival_table.R"
 
-rule create_gene_summary_table:
+rule create_combined_gene_scores_tables:
   input:
-      os.path.join(out_dir, "expr", "gene", "stats", "mean.feather"),
-      os.path.join(out_dir, "expr", "gene", "stats", "median.feather"),
-      os.path.join(out_dir, "expr", "gene", "stats", "var.feather"),
-      os.path.join(out_dir, "expr", "gene", "stats", "cv.feather"),
-      os.path.join(out_dir, "expr", "gene", "stats", "ratio_nonzero.feather"),
-      os.path.join(out_dir, "scores", "metap", "all", "gene.feather"),
-      os.path.join(out_dir, "scores", "metap", "disease_stage", "gene.feather"),
-      os.path.join(out_dir, "scores", "metap", "survival_os", "gene.feather"),
-      os.path.join(out_dir, "scores", "metap", "survival_pfs", "gene.feather"),
-      os.path.join(out_dir, "scores", "metap", "treatment_response", "gene.feather")
+      os.path.join(out_dir, "scores", "metap", "{category}", "gene.feather"),
+      os.path.join(out_dir, "scores", "metafor", "{category}", "gene.feather")
   output:
-      os.path.join(out_dir, "summary", "gene.feather")
+      os.path.join(out_dir, "scores", "combined", "{category}", "gene.feather")
   script:
-    "scripts/create_gene_summary_table.R"
+      "scripts/create_combined_gene_scores_tables.R"
+
+# rule create_gene_summary_table:
+#   input:
+#       os.path.join(out_dir, "expr", "gene", "stats", "mean.feather"),
+#       os.path.join(out_dir, "expr", "gene", "stats", "median.feather"),
+#       os.path.join(out_dir, "expr", "gene", "stats", "var.feather"),
+#       os.path.join(out_dir, "expr", "gene", "stats", "cv.feather"),
+#       os.path.join(out_dir, "expr", "gene", "stats", "ratio_nonzero.feather"),
+#       os.path.join(out_dir, "scores", "metap", "all", "gene.feather"),
+#       os.path.join(out_dir, "scores", "metap", "disease_stage", "gene.feather"),
+#       os.path.join(out_dir, "scores", "metap", "survival_os", "gene.feather"),
+#       os.path.join(out_dir, "scores", "metap", "survival_pfs", "gene.feather"),
+#       os.path.join(out_dir, "scores", "metap", "treatment_response", "gene.feather")
+#   output:
+#       os.path.join(out_dir, "summary", "gene.feather")
+#   script:
+#     "scripts/create_gene_summary_table.R"
 
 rule compute_gene_stats:
     output: 
@@ -113,6 +128,22 @@ rule compute_gene_stats:
     script:
         "scripts/compute_gene_stats.R"
 
+rule create_scaled_coex_matrices:
+    input:
+      os.path.join(out_dir, "expr", "gene", "expr_scaled.feather"),
+    output:
+      os.path.join(out_dir, "expr", "gene", "coex_scaled.feather"),
+    script:
+      "scripts/compute_coex_matrices.R"
+
+rule create_coex_matrices:
+    input:
+      os.path.join(out_dir, "expr", "gene", "expr.feather"),
+    output:
+      os.path.join(out_dir, "expr", "gene", "coex.feather"),
+    script:
+      "scripts/compute_coex_matrices.R"
+
 rule create_combined_expr:
     input:
         os.path.join(out_dir, "scores", "metap", "all", "gene.feather")
@@ -121,6 +152,14 @@ rule create_combined_expr:
         os.path.join(out_dir, "expr", "gene", "expr_scaled.feather")
     script:
         "scripts/create_combined_expr.R"
+
+rule create_gene_metadata_table:
+    input:
+        os.path.join(out_dir, "scores", "metap", "all", "gene.feather")
+    output:
+        os.path.join(out_dir, "metadata", "genes.feather")
+    script:
+       "scripts/create_gene_metadata_table.R"
 
 rule compute_metap_scores:
     input: 
@@ -163,19 +202,33 @@ rule create_category_specific_associations:
     script:
         "scripts/create_category_specific_associations.R"
 
+rule create_covariates_metadata_table:
+    input:
+        os.path.join(out_dir, "metadata", "datasets.feather")
+    output:
+        os.path.join(out_dir, "metadata", "covariates.feather")
+    script:
+        "scripts/create_covariates_metadata_table.R"
+
 rule create_combined_covariates_yaml:
     output:
         os.path.join(out_dir, "metadata", "covariates.yml")
     script:
         "scripts/create_combined_covariates_yaml.R"
 
-rule create_dataset_metadata:
+rule create_pathway_metadata_table:
+  output:
+    os.path.join(out_dir, "metadata", "pathways.feather")
+  script:
+    "scripts/create_pathway_metadata_table.R"
+
+rule create_dataset_metadata_table:
     output:
         os.path.join(out_dir, "metadata", "datasets.feather")
     script:
         "scripts/create_dataset_metadata.R"
 
-rule create_combined_sample_metadata:
+rule create_combined_sample_metadata_table:
     output:
         os.path.join(out_dir, "metadata", "samples.feather")
     script:

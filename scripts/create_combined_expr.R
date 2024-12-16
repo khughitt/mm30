@@ -8,11 +8,11 @@ suppressMessages(library(tidyverse))
 snek <- snakemake
 
 # exclude genes below a specified threshold of significance;
-# current approach: keep all genes with >= 2 P-values < 0.01.
+# current approach: keep all genes with >= 1 P-values < 0.001.
 gene_scores <- read_feather(snek@input[[1]])
 
 to_keep <- gene_scores %>%
-  filter(num_sig_p01 > 1) %>%
+  filter(num_sig_p001 >= 1) %>%
   pull(symbol)
 
 # create a list of inidividual dataframes

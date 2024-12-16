@@ -1,8 +1,0 @@
-Individual pipelines/steps to run (~/d/r/mm30/xx):
-
-1. geo
-2. mmrf
-2. fmap
-3. fassoc
-4. pipeline
-5. fgsea
