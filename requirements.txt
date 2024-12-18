@@ -6,6 +6,7 @@ bioconductor-org.hs.eg.db
 r-annotables
 r-arrow
 r-heatmaply
+r-igraph
 r-knitr
 r-metap
 r-nmf

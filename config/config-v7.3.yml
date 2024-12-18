@@ -16,12 +16,22 @@ msigdb_json: "/data/raw/gene-sets/msigdb/2024.1/hs/msigdb.v2024.1.Hs.json"
 # location of processed gene expression data; used to construct a combined expr
 # data matrix for convenience
 expr_data:
-  geo: "/data/proj/mm30/7.3/geo/final/*/data.feather"
-  mmrf: "/data/proj/mm30/7.3/mmrf/IA22/rnaseq/636c07bf052f470001ac0592_Expression Estimates - Gene Based_MMRF_CoMMpass_IA22_salmon_geneUnstrandedIgFiltered_tpm.feather"
+  gene:
+    geo: "/data/proj/mm30/7.3/geo/final/*/data.feather"
+    mmrf: "/data/proj/mm30/7.3/mmrf/IA22/rnaseq/636c07bf052f470001ac0592_Expression Estimates - Gene Based_MMRF_CoMMpass_IA22_salmon_geneUnstrandedIgFiltered_tpm.feather"
+  pathway:
+    geo: "/data/proj/mm30/7.3/fmap/GSE*/median/data.feather"
+    mmrf: "/data/proj/mm30/7.3/fmap/mmrf-ia22/median/data.feather"
 
 sample_metadata:
   geo: "/data/proj/mm30/7.3/geo/final/*/column-metadata.feather"
   mmrf: "/data/proj/mm30/7.3/mmrf/IA22/clinical_flat_files/MMRF_CoMMpass_IA22_combined_metadata.feather"
+
+# co-expression
+coex:
+  feature_selection:
+    num_feats: 20
+    metric: 'sumz_wt_pval'
 
 # If true, each dataset will contribute the same amount to the final combined
 # p-values / scores. 

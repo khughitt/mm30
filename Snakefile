@@ -96,61 +96,49 @@ rule create_gene_survival_table:
 rule create_combined_score_tables:
   input:
       os.path.join(out_dir, "scores", "metap", "{category}", "{feat_level}.feather"),
-      os.path.join(out_dir, "scores", "metafor", "{category}", "{feat_level}.feather")
+      os.path.join(out_dir, "scores", "metafor", "{category}", "{feat_level}.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "stats", "mean.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "stats", "median.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "stats", "var.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "stats", "cv.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "stats", "ratio_nonzero.feather"),
   output:
       os.path.join(out_dir, "scores", "combined", "{category}", "{feat_level}.feather")
   script:
       "scripts/create_combined_score_tables.R"
 
-# rule create_gene_summary_table:
-#   input:
-#       os.path.join(out_dir, "expr", "gene", "stats", "mean.feather"),
-#       os.path.join(out_dir, "expr", "gene", "stats", "median.feather"),
-#       os.path.join(out_dir, "expr", "gene", "stats", "var.feather"),
-#       os.path.join(out_dir, "expr", "gene", "stats", "cv.feather"),
-#       os.path.join(out_dir, "expr", "gene", "stats", "ratio_nonzero.feather"),
-#       os.path.join(out_dir, "scores", "metap", "all", "gene.feather"),
-#       os.path.join(out_dir, "scores", "metap", "disease_stage", "gene.feather"),
-#       os.path.join(out_dir, "scores", "metap", "survival_os", "gene.feather"),
-#       os.path.join(out_dir, "scores", "metap", "survival_pfs", "gene.feather"),
-#       os.path.join(out_dir, "scores", "metap", "treatment_response", "gene.feather")
-#   output:
-#       os.path.join(out_dir, "summary", "gene.feather")
-#   script:
-#     "scripts/create_gene_summary_table.R"
-
-rule compute_gene_stats:
+rule compute_expr_stats:
     output: 
-        os.path.join(out_dir, "expr", "gene", "stats", "mean.feather"),
-        os.path.join(out_dir, "expr", "gene", "stats", "median.feather"),
-        os.path.join(out_dir, "expr", "gene", "stats", "var.feather"),
-        os.path.join(out_dir, "expr", "gene", "stats", "cv.feather"),
-        os.path.join(out_dir, "expr", "gene", "stats", "ratio_nonzero.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "stats", "mean.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "stats", "median.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "stats", "var.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "stats", "cv.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "stats", "ratio_nonzero.feather"),
     script:
-        "scripts/compute_gene_stats.R"
+        "scripts/compute_expr_stats.R"
 
 rule create_scaled_coex_matrices:
     input:
-      os.path.join(out_dir, "expr", "gene", "expr_scaled.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "expr_scaled.feather"),
     output:
-      os.path.join(out_dir, "expr", "gene", "coex_scaled.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "coex_scaled.feather"),
     script:
       "scripts/compute_coex_matrices.R"
 
 rule create_coex_matrices:
     input:
-      os.path.join(out_dir, "expr", "gene", "expr.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "expr.feather"),
     output:
-      os.path.join(out_dir, "expr", "gene", "coex.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "coex.feather"),
     script:
       "scripts/compute_coex_matrices.R"
 
 rule create_combined_expr:
     input:
-        os.path.join(out_dir, "scores", "metap", "all", "gene.feather")
+        os.path.join(out_dir, "scores", "metap", "all", "{feat_level}.feather")
     output: 
-        os.path.join(out_dir, "expr", "gene", "expr.feather"),
-        os.path.join(out_dir, "expr", "gene", "expr_scaled.feather")
+        os.path.join(out_dir, "expr", "{feat_level}", "expr.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "expr_scaled.feather")
     script:
         "scripts/create_combined_expr.R"
 
