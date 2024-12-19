@@ -1,5 +1,5 @@
 #
-# create_pathway_metadata_table.py
+# create_gene_set_metadata_table.py
 #
 import json
 import pandas as pd

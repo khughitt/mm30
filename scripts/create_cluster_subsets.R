@@ -6,7 +6,7 @@
 suppressMessages(library(arrow))
 suppressMessages(library(tidyverse))
 
-# load dataset gene- or pathway-level p-values calculcated by fassoc
+# load dataset gene- or gene set-level p-values calculcated by fassoc
 pvals <- read_feather(snakemake@input[['pvals']])
 effects <- read_feather(snakemake@input[['effects']])
 errors <- read_feather(snakemake@input[['errors']])

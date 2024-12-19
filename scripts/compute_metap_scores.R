@@ -16,7 +16,7 @@ suppressMessages(library(tidyverse))
 
 snek <- snakemake
 
-# load dataset gene- or pathway-level p-values calculated by fassoc, along with the
+# load dataset gene- or gene set-level p-values calculated by fassoc, along with the
 # experiment metadata
 pvals <- read_feather(snek@input[["pvals"]])
 mdata <- read_feather(snek@input[["mdata"]])

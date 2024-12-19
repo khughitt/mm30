@@ -7,19 +7,11 @@ import yaml
 import numpy as np
 import pandas as pd
 
-#import seaborn as sns
-#import umap
-#from matplotlib import pyplot as plt
 from nodes import BioDataset
 
 snek = snakemake
 
 df = pd.read_feather(snek.input[0])
-#df = df.set_index(df.columns[0])
-
-# load package metadata
-#  with open("metadata/metadata.yml") as fp:
-#      metadata = yaml.load(fp, Loader=yaml.FullLoader)
 
 # package metadata
 metadata = {
@@ -41,7 +33,7 @@ metadata = {
 }
 
 # include gene info from annotables as row metadata
-# todo: for pathways, include MSigDB gene set metadata;
+# todo: for gene sets, include MSigDB gene set metadata;
 if snek.wildcards['feat_level'] == 'gene':
     row_mdata = pd.read_csv("metadata/annotables-grch38.tsv.gz", sep='\t')
     row_mdata = row_mdata.set_index('symbol')

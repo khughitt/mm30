@@ -8,7 +8,7 @@ suppressMessages(library(tidyverse))
 
 snek <- snakemake
 
-# load dataset gene- or pathway-level p-values calculcated by fassoc
+# load dataset gene- or gene set-level p-values calculcated by fassoc
 pvals <- read_feather(snek@input[["pvals"]])
 effects <- read_feather(snek@input[["effects"]])
 errors <- read_feather(snek@input[["errors"]])

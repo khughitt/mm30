@@ -2,7 +2,7 @@
 MM30 Score generation pipeline
 
 Combines output from fassoc feature-phenotype association pipeline to generate final
-MM30 gene and pathway weights.
+MM30 gene and gene set weights.
 """
 import os
 import pandas as pd
@@ -16,7 +16,7 @@ out_dir = os.path.join(config["out_dir"], config["version"], "results")
 # rankings to create for specific dataset/covariate categories
 categories = ["disease_stage", "survival_os", "survival_pfs", "treatment_response"]
 
-feat_levels = ["gene", "pathway"]
+feat_levels = ["gene", "gene_set"]
 
 wildcard_constraints:
     category="|".join(categories),
@@ -41,7 +41,7 @@ rule all:
         os.path.join(out_dir, "metadata", "covariates.feather"),
         os.path.join(out_dir, "metadata", "datasets.feather"),
         os.path.join(out_dir, "metadata", "genes.feather"),
-        os.path.join(out_dir, "metadata", "pathways.feather"),
+        os.path.join(out_dir, "metadata", "gene_sets.feather"),
         os.path.join(out_dir, "metadata", "samples.feather")
 
 rule build_packages:
@@ -205,11 +205,11 @@ rule create_combined_covariates_yaml:
     script:
         "scripts/create_combined_covariates_yaml.R"
 
-rule create_pathway_metadata_table:
+rule create_gene_set_metadata_table:
   output:
-    os.path.join(out_dir, "metadata", "pathways.feather")
+    os.path.join(out_dir, "metadata", "gene_sets.feather")
   script:
-    "scripts/create_pathway_metadata_table.py"
+    "scripts/create_gene_set_metadata_table.py"
 
 rule create_dataset_metadata_table:
     output:

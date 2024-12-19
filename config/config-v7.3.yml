@@ -19,7 +19,7 @@ expr_data:
   gene:
     geo: "/data/proj/mm30/7.3/geo/final/*/data.feather"
     mmrf: "/data/proj/mm30/7.3/mmrf/IA22/rnaseq/636c07bf052f470001ac0592_Expression Estimates - Gene Based_MMRF_CoMMpass_IA22_salmon_geneUnstrandedIgFiltered_tpm.feather"
-  pathway:
+  gene_set:
     geo: "/data/proj/mm30/7.3/fmap/GSE*/median/data.feather"
     mmrf: "/data/proj/mm30/7.3/fmap/mmrf-ia22/median/data.feather"
 

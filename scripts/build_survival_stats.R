@@ -7,7 +7,7 @@ suppressMessages(library(tidyverse))
 
 snek <- snakemake
 
-# load dataset gene- or pathway-level test effect sizes and standard errors
+# load dataset gene- or gene set-level test effect sizes and standard errors
 effects <- read_feather(snek@input[["effects"]])
 errors <- read_feather(snek@input[["errors"]])
 
