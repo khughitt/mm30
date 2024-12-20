@@ -16,6 +16,11 @@ out_dir = os.path.join(config["out_dir"], config["version"], "results")
 # rankings to create for specific dataset/covariate categories
 categories = ["disease_stage", "survival_os", "survival_pfs", "treatment_response"]
 
+# expression / co-expression variants
+expr_subsets = ["100", "500", "1k", "5k", 
+                "scaled-100", "scaled-500", "scaled-1k", "scaled-5k"]
+expr_versions = ["full", "scaled-full"] + expr_subsets
+
 feat_levels = ["gene", "gene_set"]
 
 wildcard_constraints:
@@ -31,10 +36,10 @@ rule all:
                feat_level=feat_levels, category=categories),
         expand(os.path.join(out_dir, "scores", "combined", "{category}", "{feat_level}.feather"),
                feat_level=feat_levels, category=categories),
-        os.path.join(out_dir, "expr", "gene", "expr.feather"),
-        # os.path.join(out_dir, "summary", "gene.feather"),
-        os.path.join(out_dir, "expr", "gene", "coex.feather"),
-        os.path.join(out_dir, "expr", "gene", "coex_scaled.feather"),
+        expand(os.path.join(out_dir, "coex", "{feat_level}", "coex-{expr_version}.feather"),
+               feat_level=feat_levels, expr_version=expr_subsets),
+        expand(os.path.join(out_dir, "expr", "{feat_level}", "expr-{expr_version}.feather"),
+               feat_level=feat_levels, expr_version=expr_versions),
         os.path.join(out_dir, "gene", "survival.feather"),
         os.path.join(out_dir, "scores", "gene_score_cor_mat.feather"),
         os.path.join(out_dir, "metadata", "covariates.yml"),
@@ -107,6 +112,40 @@ rule create_combined_score_tables:
   script:
       "scripts/create_combined_score_tables.R"
 
+rule create_coex_matrices:
+    input:
+      os.path.join(out_dir, "scores", "metap", "all", "{feat_level}.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "expr-5k.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "expr-scaled-5k.feather")
+    output:
+      os.path.join(out_dir, "coex", "{feat_level}", "coex-100.feather"),
+      os.path.join(out_dir, "coex", "{feat_level}", "coex-500.feather"),
+      os.path.join(out_dir, "coex", "{feat_level}", "coex-1k.feather"),
+      os.path.join(out_dir, "coex", "{feat_level}", "coex-5k.feather"),
+      os.path.join(out_dir, "coex", "{feat_level}", "coex-scaled-100.feather"),
+      os.path.join(out_dir, "coex", "{feat_level}", "coex-scaled-500.feather"),
+      os.path.join(out_dir, "coex", "{feat_level}", "coex-scaled-1k.feather"),
+      os.path.join(out_dir, "coex", "{feat_level}", "coex-scaled-5k.feather")
+    script:
+      "scripts/create_coex_matrices.R"
+
+rule create_combined_expr_matrices:
+    input:
+        os.path.join(out_dir, "scores", "metap", "all", "{feat_level}.feather")
+    output: 
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-full.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-100.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-500.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-1k.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-5k.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-scaled-full.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-scaled-100.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-scaled-500.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-scaled-1k.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-scaled-5k.feather")
+    script:
+        "scripts/create_combined_expr_matrices.R"
+
 rule compute_expr_stats:
     output: 
         os.path.join(out_dir, "expr", "{feat_level}", "stats", "mean.feather"),
@@ -116,31 +155,6 @@ rule compute_expr_stats:
         os.path.join(out_dir, "expr", "{feat_level}", "stats", "ratio_nonzero.feather"),
     script:
         "scripts/compute_expr_stats.R"
-
-rule create_scaled_coex_matrices:
-    input:
-      os.path.join(out_dir, "expr", "{feat_level}", "expr_scaled.feather"),
-    output:
-      os.path.join(out_dir, "expr", "{feat_level}", "coex_scaled.feather"),
-    script:
-      "scripts/compute_coex_matrices.R"
-
-rule create_coex_matrices:
-    input:
-      os.path.join(out_dir, "expr", "{feat_level}", "expr.feather"),
-    output:
-      os.path.join(out_dir, "expr", "{feat_level}", "coex.feather"),
-    script:
-      "scripts/compute_coex_matrices.R"
-
-rule create_combined_expr:
-    input:
-        os.path.join(out_dir, "scores", "metap", "all", "{feat_level}.feather")
-    output: 
-        os.path.join(out_dir, "expr", "{feat_level}", "expr.feather"),
-        os.path.join(out_dir, "expr", "{feat_level}", "expr_scaled.feather")
-    script:
-        "scripts/create_combined_expr.R"
 
 rule create_gene_metadata_table:
     input:
