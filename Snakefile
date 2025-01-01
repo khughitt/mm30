@@ -242,12 +242,14 @@ rule create_combined_covariates_yaml:
         "scripts/create_combined_covariates_yaml.R"
 
 rule create_gene_set_metadata_table:
-  output:
-    os.path.join(out_dir, "metadata", "gene_sets.feather")
-  script:
-    "scripts/create_gene_set_metadata_table.py"
+    output:
+      os.path.join(out_dir, "metadata", "gene_sets.feather")
+    script:
+      "scripts/create_gene_set_metadata_table.py"
 
 rule create_dataset_metadata_table:
+    input:
+        "metadata/mm30_experiment_metadata.tsv"
     output:
         os.path.join(out_dir, "metadata", "datasets.feather")
     script:

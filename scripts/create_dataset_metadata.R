@@ -6,13 +6,16 @@ library(tidyverse)
 
 snek <- snakemake
 
-geo_mdata <- read_feather(file.path(snek@config$geo_dir, "metadata.feather"))
+dataset_mdata <- read_tsv(snek@input[[1]], show_col_types=FALSE)
 
-dataset_mdata <- rbind(geo_mdata, c("MMRF", "MMRF CoMMpass Study IA22", NA, NA, NA, NA, NA,
-                                    "GPL11154", NA, "https://research.themmrf.org/", "", ""))
+geo_mdata <- read_feather(file.path(snek@config$geo_dir, "metadata.feather")) %>%
+  select(accession=geo_id, geo_name=name, abstract, overall_design, 
+         geo_submission_date=submission_date, geo_last_update_date=last_update_date, urls,
+         pubmed_ids, supplementary_files)
 
 dataset_mdata <- dataset_mdata %>%
-  rename(dataset=geo_id)
+  left_join(geo_mdata, by='accession') %>%
+  select(accession, name=dataset, everything())
 
 dataset_mdata %>%
   write_feather(snek@output[[1]])
