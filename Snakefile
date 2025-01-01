@@ -23,6 +23,8 @@ expr_versions = ["full", "scaled-full"] + expr_subsets
 
 feat_levels = ["gene", "gene_set"]
 
+mm_stage_datasets = config['mm_stage_datasets']
+
 wildcard_constraints:
     category="|".join(categories),
 
@@ -40,6 +42,8 @@ rule all:
                feat_level=feat_levels, expr_version=expr_subsets),
         expand(os.path.join(out_dir, "expr", "{feat_level}", "expr-{expr_version}.feather"),
                feat_level=feat_levels, expr_version=expr_versions),
+        expand(os.path.join(out_dir, "disease_stage", "scaled", "{feat_level}", "combined.feather"), 
+               feat_level=feat_levels),
         os.path.join(out_dir, "gene", "survival.feather"),
         os.path.join(out_dir, "scores", "gene_score_cor_mat.feather"),
         os.path.join(out_dir, "metadata", "covariates.yml"),
@@ -87,16 +91,34 @@ rule compute_mm30_ranking_correlations:
 
         gene_scores.corr().reset_index().rename(columns={"index": "category"}).to_feather(output[0])
 
+rule create_combined_disease_stage_table:
+    input:
+      expand(os.path.join(out_dir, "disease_stage", "scaled", "{{feat_level}}", "indiv", "{stage_dataset}.feather"), 
+             stage_dataset=mm_stage_datasets)
+    output:
+      os.path.join(out_dir, "disease_stage", "scaled", "{feat_level}", "combined.feather")
+    script:
+        "scripts/create_combined_disease_stage_table.R"
+
+rule compute_scaled_disease_stage_expression:
+    input:
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-full.feather"),
+        os.path.join(out_dir, "metadata", "samples.feather")
+    output:
+        os.path.join(out_dir, "disease_stage", "scaled", "{feat_level}", "indiv", "{stage_dataset}.feather")
+    script:
+        "scripts/compute_scaled_disease_stage_expression.R"
+
 rule create_gene_survival_table:
-  input:
-    os.path.join(config["fassoc_dir"], "merged", "gene_association_effects.feather"),
-    os.path.join(config["fassoc_dir"], "merged", "gene_association_errors.feather"),
-    os.path.join(config["fassoc_dir"], "merged", "gene_association_pvals.feather"),
-    os.path.join(config["fassoc_dir"], "metadata", "association_metadata.feather")
-  output:
-    os.path.join(out_dir, "gene", "survival.feather")
-  script:
-    "scripts/create_gene_survival_table.R"
+    input:
+        os.path.join(config["fassoc_dir"], "merged", "gene_association_effects.feather"),
+        os.path.join(config["fassoc_dir"], "merged", "gene_association_errors.feather"),
+        os.path.join(config["fassoc_dir"], "merged", "gene_association_pvals.feather"),
+        os.path.join(config["fassoc_dir"], "metadata", "association_metadata.feather")
+    output:
+        os.path.join(out_dir, "gene", "survival.feather")
+    script:
+        "scripts/create_gene_survival_table.R"
 
 rule create_combined_score_tables:
   input:

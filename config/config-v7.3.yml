@@ -27,6 +27,10 @@ sample_metadata:
   geo: "/data/proj/mm30/7.3/geo/final/*/column-metadata.feather"
   mmrf: "/data/proj/mm30/7.3/mmrf/IA22/clinical_flat_files/MMRF_CoMMpass_IA22_combined_metadata.feather"
 
+# geo datasets with mm stage information
+mm_stage_datasets: ['GSE117847', 'GSE5900', 'GSE47552', 'GSE83503', 'GSE118900', 'GSE13591',
+                    'GSE193531', 'GSE26760', 'GSE6477', 'GSE6691']
+
 # co-expression
 coex:
   feature_selection:
