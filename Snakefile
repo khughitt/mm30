@@ -129,6 +129,7 @@ rule create_combined_score_tables:
       os.path.join(out_dir, "expr", "{feat_level}", "stats", "var.feather"),
       os.path.join(out_dir, "expr", "{feat_level}", "stats", "cv.feather"),
       os.path.join(out_dir, "expr", "{feat_level}", "stats", "ratio_nonzero.feather"),
+      os.path.join(out_dir, "expr", "{feat_level}", "stats", "ratio_missing.feather"),
   output:
       os.path.join(out_dir, "scores", "combined", "{category}", "{feat_level}.feather")
   script:
@@ -175,6 +176,7 @@ rule compute_expr_stats:
         os.path.join(out_dir, "expr", "{feat_level}", "stats", "var.feather"),
         os.path.join(out_dir, "expr", "{feat_level}", "stats", "cv.feather"),
         os.path.join(out_dir, "expr", "{feat_level}", "stats", "ratio_nonzero.feather"),
+        os.path.join(out_dir, "expr", "{feat_level}", "stats", "ratio_missing.feather"),
     script:
         "scripts/compute_expr_stats.R"
 

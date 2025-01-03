@@ -21,11 +21,16 @@ expr_median <- list()
 expr_var <- list()
 expr_cv <- list()
 expr_ratio_nonzero <- list()
+expr_ratio_missing <- list()
 
 geo_infiles <- Sys.glob(snek@config$expr_data[[feat_level]][["geo"]])
 
 ratio_nonzero <- function(x) {
   sum(x != 0, na.rm=TRUE) / length(x)
+}
+
+ratio_missing <- function(x) {
+  sum(is.na(x)) / length(x)
 }
 
 # GEO
@@ -40,14 +45,16 @@ for (infile in geo_infiles) {
   dataset_means <- apply(df, 1, mean, na.rm=TRUE)
   dataset_medians <- apply(df, 1, median, na.rm=TRUE)
   dataset_vars <- apply(df, 1, var, na.rm=TRUE)
-  dataset_ratio_nonzeros <- apply(df, 1, ratio_nonzero)
   dataset_cvs <- sqrt(dataset_vars) / dataset_means
+  dataset_ratio_nonzero <- apply(df, 1, ratio_nonzero)
+  dataset_ratio_missing <- apply(df, 1, ratio_missing)
 
   expr_mean[[acc]]   <- enframe(dataset_means, name=feat_name, value=acc)
   expr_median[[acc]] <- enframe(dataset_medians, name=feat_name, value=acc)
   expr_var[[acc]]    <- enframe(dataset_vars, name=feat_name, value=acc)
   expr_cv[[acc]]     <- enframe(dataset_cvs, name=feat_name, value=acc)
-  expr_ratio_nonzero[[acc]] <- enframe(dataset_ratio_nonzeros, name=feat_name, value=acc)
+  expr_ratio_nonzero[[acc]] <- enframe(dataset_ratio_nonzero, name=feat_name, value=acc)
+  expr_ratio_missing[[acc]] <- enframe(dataset_ratio_missing, name=feat_name, value=acc)
 }
 
 # MMRF
@@ -59,14 +66,16 @@ df <- read_feather(infile) %>%
 mmrf_means <- apply(df, 1, mean, na.rm=TRUE)
 mmrf_medians <- apply(df, 1, median, na.rm=TRUE)
 mmrf_vars <- apply(df, 1, var, na.rm=TRUE)
-mmrf_ratio_nonzeros <- apply(df, 1, ratio_nonzero)
+mmrf_ratio_nonzero <- apply(df, 1, ratio_nonzero)
+mmrf_ratio_missing <- apply(df, 1, ratio_missing)
 mmrf_cvs <- sqrt(mmrf_vars) / mmrf_means
 
 expr_mean[["mmrf"]]     <- enframe(mmrf_means, name=feat_name, value="mmrf")
 expr_median[["mmrf"]]   <- enframe(mmrf_medians, name=feat_name, value="mmrf")
 expr_var[["mmrf"]]      <- enframe(mmrf_vars, name=feat_name, value="mmrf")
 expr_cv[["mmrf"]]       <- enframe(mmrf_cvs, name=feat_name, value="mmrf")
-expr_ratio_nonzero[["mmrf"]] <- enframe(mmrf_ratio_nonzeros, name=feat_name, value="mmrf")
+expr_ratio_nonzero[["mmrf"]] <- enframe(mmrf_ratio_nonzero, name=feat_name, value="mmrf")
+expr_ratio_missing[["mmrf"]] <- enframe(mmrf_ratio_missing, name=feat_name, value="mmrf")
 
 # save results
 expr_mean %>%
@@ -88,3 +97,7 @@ expr_cv %>%
 expr_ratio_nonzero %>%
   purrr::reduce(full_join, by=feat_name) %>%
   write_feather(snek@output[[5]])
+
+expr_ratio_missing %>%
+  purrr::reduce(full_join, by=feat_name) %>%
+  write_feather(snek@output[[6]])

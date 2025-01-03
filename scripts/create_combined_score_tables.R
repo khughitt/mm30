@@ -18,19 +18,16 @@ means <- read_feather(snek@input[[3]])
 medians <- read_feather(snek@input[[4]])
 vars <- read_feather(snek@input[[5]])
 cvs <- read_feather(snek@input[[6]])
-ratio_nonzeros <- read_feather(snek@input[[7]])
-
-ratio_na <- apply(means[, -1], 1, function(x) {
-  sum(is.na(x)) / length(x)
-})
+ratio_nonzero <- read_feather(snek@input[[7]])
+ratio_missing <- read_feather(snek@input[[8]])
 
 df <- data.frame(
   mean = apply(means[, -1], 1, mean, na.rm=TRUE),
   median = apply(medians[, -1], 1, mean, na.rm=TRUE),
   var = apply(vars[, -1], 1, mean, na.rm=TRUE),
   cv = apply(cvs[, -1], 1, mean, na.rm=TRUE),
-  ratio_nonzero = apply(ratio_nonzeros[, -1], 1, mean, na.rm=TRUE),
-  ratio_missing = ratio_na
+  ratio_nonzero = apply(ratio_nonzero[, -1], 1, mean, na.rm=TRUE),
+  ratio_missing = apply(ratio_missing[, -1], 1, mean, na.rm=TRUE)
 )
 
 df[[feat_name]] <- means %>%
