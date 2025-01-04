@@ -44,6 +44,8 @@ rule all:
                feat_level=feat_levels, expr_version=expr_versions),
         expand(os.path.join(out_dir, "disease_stage", "scaled", "{feat_level}", "combined.feather"), 
                feat_level=feat_levels),
+        expand(os.path.join(out_dir, "disease_stage", "transitions", "{feat_level}", "combined.feather"),
+               feat_level=feat_levels),
         os.path.join(out_dir, "gene", "survival.feather"),
         os.path.join(out_dir, "scores", "gene_score_cor_mat.feather"),
         os.path.join(out_dir, "metadata", "covariates.yml"),
@@ -90,6 +92,25 @@ rule compute_mm30_ranking_correlations:
             gene_scores = gene_scores.join(dat, on="symbol")
 
         gene_scores.corr().reset_index().rename(columns={"index": "category"}).to_feather(output[0])
+
+rule create_combined_disease_stage_transition_table:
+    input:
+      expand(os.path.join(out_dir, "disease_stage", "transitions", "{{feat_level}}", "indiv", "{stage_dataset}.feather"),
+             stage_dataset=mm_stage_datasets)
+    output:
+        os.path.join(out_dir, "disease_stage", "transitions", "{feat_level}", "combined.feather"),
+        os.path.join(out_dir, "disease_stage", "transitions", "{feat_level}", "counts.feather")
+    script:
+        "scripts/create_combined_disease_stage_transition_table.R"
+
+rule create_disease_stage_transition_tables:
+    input:
+        os.path.join(out_dir, "expr", "{feat_level}", "expr-full.feather"),
+        os.path.join(out_dir, "metadata", "samples.feather")
+    output:
+        os.path.join(out_dir, "disease_stage", "transitions", "{feat_level}", "indiv", "{stage_dataset}.feather")
+    script:
+        "scripts/create_disease_stage_transition_tables.R"
 
 rule create_combined_disease_stage_table:
     input:
