@@ -37,6 +37,14 @@ res_df <- data.frame(res_lst)
 feat_names <- dat_lst[[1]][,1]
 res_df <- cbind(feat_names, res_df)
 
+# drop any entries with all missing values
+num_nas <- apply(res_df[, -1], 1, function(x) {
+  sum(is.na(x))
+})
+
+mask <- num_nas != (ncol(res_df) - 1)
+res_df <- res_df[mask, ]
+
 res_df %>%
   write_feather(snek@output[[1]])
 
