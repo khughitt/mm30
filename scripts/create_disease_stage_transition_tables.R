@@ -18,9 +18,10 @@ snek <- snakemake
 
 acc <- snek@wildcards$stage_dataset
 feat_level <- snek@wildcards$feat_level
+feat_key <- ifelse(feat_level == "gene", "symbol", "gene_set")
 
 expr <- read_feather(snek@input[[1]]) %>%
-  column_to_rownames(feat_level)
+  column_to_rownames(feat_key)
 
 mdat <- read_feather(snek@input[[2]])
 
@@ -136,5 +137,6 @@ if ("RRMM" %in% mdat$disease_stage) {
 
 df <- data.frame(stage_transitions)
 df <- cbind(rownames(expr), df)
+colnames(df)[1] <- feat_key
 
 write_feather(df, snek@output[[1]])

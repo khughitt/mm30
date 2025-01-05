@@ -31,6 +31,10 @@ sample_metadata:
 mm_stage_datasets: ['GSE117847', 'GSE5900', 'GSE47552', 'GSE83503', 'GSE118900', 'GSE13591',
                     'GSE193531', 'GSE26760', 'GSE6477', 'GSE6691']
 
+# names of disease stage transitions assessed
+mm_stage_transitions: ["Healthy_MGUS", "Healthy_MM", "MGUS_SMM", "MGUS_MM", "SMM_MM", "MM_RRMM",
+                       "early_vs_late", "before_vs_after_relapse", "before_vs_after_smm"]
+
 # co-expression
 coex:
   feature_selection:

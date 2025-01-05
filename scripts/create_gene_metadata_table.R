@@ -50,7 +50,7 @@ chr_bands <- AnnotationDbi::select(org.Hs.eg.db,
 colnames(chr_bands) <- c("symbol", "chr_subband")
 
 gene_annot <- gene_annot %>%
-  inner_join(chr_bands, by="symbol") %>%
+  left_join(chr_bands, by="symbol") %>%
   filter(symbol != "")
 
 # for the small number gene symbols mapped to multiple loci, set values to "NA"
