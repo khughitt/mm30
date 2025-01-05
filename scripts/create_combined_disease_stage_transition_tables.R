@@ -47,9 +47,13 @@ num_non_missing <- function(x) {
 for (transition in names(res)) {
   res_df <- res[[transition]]
 
-  res_df$mean_change <- apply(res_df[, -1], 1, mean, na.rm=TRUE)
-  res_df$median_change <- apply(res_df[, -1], 1, median, na.rm=TRUE)
-  res_df$num_datasets <- apply(res_df[, -1], 1, num_non_missing)
+  num_datasets <- apply(res_df[, -1], 1, num_non_missing)
+  mean_change <- apply(res_df[, -1], 1, mean, na.rm=TRUE)
+  median_change <- apply(res_df[, -1], 1, median, na.rm=TRUE)
+
+  res_df$num_datasets <- num_datasets
+  res_df$mean_change <- mean_change
+  res_df$median_change <- median_change
 
   outfile <- file.path(out_dir, sprintf("%s.feather", transition))
 
