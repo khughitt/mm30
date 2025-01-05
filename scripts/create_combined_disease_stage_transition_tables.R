@@ -40,8 +40,13 @@ for (acc in names(dat_lst)) {
 # store resulting dataframes
 out_dir <- dirname(snek@output[[1]])
 
+num_non_missing <- function(x) {
+  return(sum(!is.na(x)))
+}
+
 for (transition in names(res)) {
   res_df <- res[[transition]]
+  res_df$num_datasets <- apply(res_df[, -1], 1, num_non_missing)
 
   outfile <- file.path(out_dir, sprintf("%s.feather", transition))
 
