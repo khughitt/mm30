@@ -37,7 +37,7 @@ for (acc in names(dat_lst)) {
 }
 
 
-# store resulting dataframes
+# add summary statistics and store resulting dataframes
 out_dir <- dirname(snek@output[[1]])
 
 num_non_missing <- function(x) {
@@ -46,6 +46,9 @@ num_non_missing <- function(x) {
 
 for (transition in names(res)) {
   res_df <- res[[transition]]
+
+  res_df$mean_change <- apply(res_df[, -1], 1, mean, na.rm=TRUE)
+  res_df$median_change <- apply(res_df[, -1], 1, median, na.rm=TRUE)
   res_df$num_datasets <- apply(res_df[, -1], 1, num_non_missing)
 
   outfile <- file.path(out_dir, sprintf("%s.feather", transition))
